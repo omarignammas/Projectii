@@ -1,15 +1,22 @@
 package org.test.backendprojecty.service;
 
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.test.backendprojecty.dtos.request.PaginationRequest;
 import org.test.backendprojecty.dtos.request.ProjectRequest;
+import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.dtos.response.ProjectProgressResponse;
 import org.test.backendprojecty.dtos.response.ProjectResponse;
 import org.test.backendprojecty.entity.Project;
@@ -22,7 +29,6 @@ import org.test.backendprojecty.repository.UserRepository;
 import org.test.backendprojecty.security.SecurityUser;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -57,6 +63,7 @@ class ProjectServiceTest {
     private Project project;
     private ProjectRequest projectRequest;
     private ProjectResponse projectResponse;
+    private PaginationRequest paginationRequest;
 
     @BeforeEach
     void setUp() {
@@ -84,20 +91,24 @@ class ProjectServiceTest {
                 .title("Test Project")
                 .description("Test Description")
                 .build();
+
+        paginationRequest = PaginationRequest.builder()
+                .page(0)
+                .size(10)
+                .sortField("id")
+                .direction("ASC")
+                .build();
     }
 
     @Test
     void createProject_Success() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.save(any(Project.class))).thenReturn(project);
         when(projectMapper.toResponse(project)).thenReturn(projectResponse);
 
-        // When
         ProjectResponse response = projectService.createProject(projectRequest);
 
-        // Then
         assertNotNull(response);
         assertEquals("Test Project", response.getTitle());
         verify(projectRepository).save(any(Project.class));
@@ -108,72 +119,87 @@ class ProjectServiceTest {
         // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(projectRepository.findByUserId(1L)).thenReturn(Arrays.asList(project));
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Project> projectPage = new PageImpl<>(Arrays.asList(project), pageable, 1);
+
+        when(projectRepository.findByUserId(eq(1L), any(Pageable.class)))
+                .thenReturn(projectPage);
         when(projectMapper.toResponse(project)).thenReturn(projectResponse);
 
         // When
-        List<ProjectResponse> responses = projectService.getAllProjects();
+        PagingResult<ProjectResponse> result = projectService.getAllProjects(paginationRequest);
 
         // Then
-        assertNotNull(responses);
-        assertEquals(1, responses.size());
-        verify(projectRepository).findByUserId(1L);
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(1L, result.getTotalElements());
+        assertEquals("Test Project", result.getContent().get(0).getTitle());
+        verify(projectRepository).findByUserId(eq(1L), any(Pageable.class));
+    }
+
+    @Test
+    void getAllProjects_EmptyResult() {
+        mockSecurityContext();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Project> emptyPage = new PageImpl<>(Arrays.asList(), pageable, 0);
+
+        when(projectRepository.findByUserId(eq(1L), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        PagingResult<ProjectResponse> result = projectService.getAllProjects(paginationRequest);
+
+        assertNotNull(result);
+        assertEquals(0, result.getContent().size());
+        assertTrue(result.getEmpty());
     }
 
     @Test
     void getProjectById_Success() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(project));
         when(projectMapper.toResponse(project)).thenReturn(projectResponse);
 
-        // When
         ProjectResponse response = projectService.getProjectById(1L);
 
-        // Then
         assertNotNull(response);
         assertEquals("Test Project", response.getTitle());
     }
 
     @Test
     void getProjectById_NotFound_ThrowsException() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.empty());
 
-        // When & Then
         assertThrows(ResourceNotFoundException.class, () -> projectService.getProjectById(1L));
     }
 
     @Test
     void deleteProject_Success() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(project));
 
-        // When
         projectService.deleteProject(1L);
 
-        // Then
         verify(projectRepository).delete(project);
     }
 
     @Test
     void getProjectProgress_Success() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(project));
         when(taskRepository.countByProjectIdAndCompleted(1L, true)).thenReturn(5L);
         when(taskRepository.countByProjectIdAndCompleted(1L, false)).thenReturn(5L);
 
-        // When
         ProjectProgressResponse response = projectService.getProjectProgress(1L);
 
-        // Then
         assertNotNull(response);
         assertEquals(10L, response.getTotalTasks());
         assertEquals(5L, response.getCompletedTasks());
@@ -183,7 +209,8 @@ class ProjectServiceTest {
     private void mockSecurityContext() {
         SecurityContextHolder.setContext(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(new SecurityUser(user));
+        when(authentication.getPrincipal()).thenReturn(
+                new SecurityUser(user)
+        );
     }
 }
-

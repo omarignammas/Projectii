@@ -1,15 +1,22 @@
 package org.test.backendprojecty.service;
 
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.test.backendprojecty.dtos.request.PaginationRequest;
 import org.test.backendprojecty.dtos.request.TaskRequest;
+import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.dtos.response.TaskResponse;
 import org.test.backendprojecty.entity.Project;
 import org.test.backendprojecty.entity.Task;
@@ -23,11 +30,11 @@ import org.test.backendprojecty.security.SecurityUser;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,6 +66,7 @@ class TaskServiceTest {
     private Task task;
     private TaskRequest taskRequest;
     private TaskResponse taskResponse;
+    private PaginationRequest paginationRequest;
 
     @BeforeEach
     void setUp() {
@@ -96,21 +104,25 @@ class TaskServiceTest {
                 .completed(false)
                 .projectId(1L)
                 .build();
+
+        paginationRequest = PaginationRequest.builder()
+                .page(0)
+                .size(10)
+                .sortField("id")
+                .direction("ASC")
+                .build();
     }
 
     @Test
     void createTask_Success() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(project));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
         when(taskMapper.toResponse(task)).thenReturn(taskResponse);
 
-        // When
         TaskResponse response = taskService.createTask(1L, taskRequest);
 
-        // Then
         assertNotNull(response);
         assertEquals("Test Task", response.getTitle());
         verify(taskRepository).save(any(Task.class));
@@ -122,21 +134,46 @@ class TaskServiceTest {
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(project));
-        when(taskRepository.findByProjectId(1L)).thenReturn(Arrays.asList(task));
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Task> taskPage = new PageImpl<>(Arrays.asList(task), pageable, 1);
+
+        when(taskRepository.findByProjectId(eq(1L), any(Pageable.class)))
+                .thenReturn(taskPage);
         when(taskMapper.toResponse(task)).thenReturn(taskResponse);
 
         // When
-        List<TaskResponse> responses = taskService.getAllTasksByProject(1L);
+        PagingResult<TaskResponse> result = taskService.getAllTasksByProject(1L, paginationRequest);
 
         // Then
-        assertNotNull(responses);
-        assertEquals(1, responses.size());
-        verify(taskRepository).findByProjectId(1L);
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(1, result.getTotalPages());
+        assertEquals("Test Task", result.getContent().get(0).getTitle());
+        verify(taskRepository).findByProjectId(eq(1L), any(Pageable.class));
+    }
+
+    @Test
+    void getAllTasksByProject_EmptyResult() {
+        mockSecurityContext();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(project));
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Task> emptyPage = new PageImpl<>(Arrays.asList(), pageable, 0);
+
+        when(taskRepository.findByProjectId(eq(1L), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        PagingResult<TaskResponse> result = taskService.getAllTasksByProject(1L, paginationRequest);
+
+        assertNotNull(result);
+        assertEquals(0, result.getContent().size());
+        assertTrue(result.getEmpty());
     }
 
     @Test
     void markTaskAsCompleted_Success() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(project));
@@ -144,10 +181,8 @@ class TaskServiceTest {
         when(taskRepository.save(task)).thenReturn(task);
         when(taskMapper.toResponse(task)).thenReturn(taskResponse);
 
-        // When
         TaskResponse response = taskService.markTaskAsCompleted(1L, 1L);
 
-        // Then
         assertNotNull(response);
         assertTrue(task.isCompleted());
         verify(taskRepository).save(task);
@@ -155,34 +190,32 @@ class TaskServiceTest {
 
     @Test
     void deleteTask_Success() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(project));
         when(taskRepository.findByIdAndProjectId(1L, 1L)).thenReturn(Optional.of(task));
 
-        // When
         taskService.deleteTask(1L, 1L);
 
-        // Then
         verify(taskRepository).delete(task);
     }
 
     @Test
     void getTaskById_NotFound_ThrowsException() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(project));
         when(taskRepository.findByIdAndProjectId(1L, 1L)).thenReturn(Optional.empty());
 
-        // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> taskService.getTaskById(1L, 1L));
+        assertThrows(ResourceNotFoundException.class,
+                () -> taskService.getTaskById(1L, 1L));
     }
 
     private void mockSecurityContext() {
         SecurityContextHolder.setContext(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(new SecurityUser(user));
+        when(authentication.getPrincipal()).thenReturn(
+                new SecurityUser(user)
+        );
     }
 }

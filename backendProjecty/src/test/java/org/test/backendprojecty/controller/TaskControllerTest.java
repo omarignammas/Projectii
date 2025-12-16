@@ -10,6 +10,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.test.backendprojecty.dtos.request.TaskRequest;
+import org.test.backendprojecty.dtos.response.TaskResponse;
+import org.test.backendprojecty.service.TaskService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
