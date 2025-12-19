@@ -1,65 +1,89 @@
-🗂️ Project Management App
+# 🐳 Docker Deployment Guide
 
-Application de gestion de projets et de tâches complète
-Frontend en React + Vite avec shadcn/ui, backend en Spring Boot avec JWT, base de données PostgreSQL.
+## Prerequisites
 
-🧰 Technologies Utilisées
+- Docker installed (version 20.10+)
+- Docker Compose installed (version 2.0+)
 
-Frontend:
+## Quick Start
 
-React + Vite
+### 1. Clone the repository
 
-shadcn/ui (UI Components modernes)
+```bash
+git clone <your-repo>
+cd project-management
+```
 
-Tailwind CSS
+### 2. Build and start all services
 
-React Router DOM
+```bash
+docker-compose up -d --build
+```
 
-Axios pour appels API
+### 3. Access the application
 
-date-fns pour gestion des dates
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8080
+- **Database**: localhost:5432
 
-Backend:
+### 4. Check services status
 
-Java 17+
+```bash
+docker-compose ps
+```
 
-Spring Boot
+## Available Commands
 
-Spring Data JPA
+### Start services
+```bash
+docker-compose up -d
+```
 
-JWT Authentication
+### Stop services
+```bash
+docker-compose down
+```
 
-Maven
+### View logs
+```bash
+# All services
+docker-compose logs -f
 
-Database:
+# Specific service
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f postgres
+```
 
-PostgreSQL 12+
+### Rebuild services
+```bash
+docker-compose up -d --build
+```
 
-DevOps / Deployment:
+### Clean everything
+```bash
+docker-compose down -v --rmi all
+```
 
-Docker & Docker Compose
+## Environment Variables
 
-Volumes pour persistance des données
+### Backend
+- `SPRING_DATASOURCE_URL`: PostgreSQL connection URL
+- `SPRING_DATASOURCE_USERNAME`: Database username
+- `SPRING_DATASOURCE_PASSWORD`: Database password
+- `JWT_SECRET_KEY`: JWT secret key
+- `JWT_EXPIRATION`: JWT token expiration (milliseconds)
 
-Ports exposés : frontend 3000, backend 8080, PostgreSQL 5432
+### Frontend
+- `VITE_API_URL`: Backend API URL
 
-📦 Installation et Lancement (Docker)
-1️⃣ Cloner le projet
-git clone <votre-repo>
-cd projectii
+## Production Deployment
 
-2️⃣ Structure du projet
-projectii/
-├─ docker-compose.yml
-├─ frontend/
-│  └─ Dockerfile
-├─ backend/
-│  └─ Dockerfile
+### 1. Update environment variables
 
-3️⃣ Variables d’environnement
+Create `.env` file:
 
-Créer un fichier .env à la racine :
-
+```env
 # Database
 POSTGRES_DB=projectydb
 POSTGRES_USER=admin
@@ -70,175 +94,109 @@ JWT_SECRET_KEY=your_secure_secret_key_here
 JWT_EXPIRATION=86400000
 
 # API URL
-VITE_API_URL=http://localhost:8080/api/v1
+VITE_API_URL=https://your-api-domain.com/api/v1
+```
 
-4️⃣ Lancer tous les services
+### 2. Update docker-compose.yml
+
+```yaml
+services:
+  postgres:
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  
+  backend:
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+  
+  frontend:
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+```
+
+### 3. Deploy
+
+```bash
 docker-compose up -d --build
+```
 
+## Troubleshooting
 
--d : détaché (background)
+### Backend can't connect to database
 
---build : reconstruit les images si nécessaire
+Check if PostgreSQL is healthy:
+```bash
+docker-compose logs postgres
+```
 
-5️⃣ Vérifier les conteneurs
-docker-compose ps
+### Frontend can't reach backend
 
-6️⃣ Logs pour debug
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f postgres
+Check backend logs:
+```bash
+docker-compose logs backend
+```
 
-7️⃣ Arrêter les conteneurs
-docker-compose down
+Verify CORS configuration in backend.
 
-🚀 Lancement Local sans Docker
-Frontend
-cd frontend
-npm install
-npm run dev
+### Database data persistence
 
+Data is stored in Docker volume `postgres-data`. To backup:
 
-Accessible sur http://localhost:3000
-
-Backend
-cd backend
-mvn clean install
-mvn spring-boot:run
-
-
-Accessible sur http://localhost:8080
-
-🎨 Frontend Features
-
-Auth : Login / Register / JWT Protected Routes
-
-Projets : CRUD complet, vue détaillée, progression
-
-Tâches : CRUD complet, marque comme complété, alertes tâches en retard
-
-UI : shadcn/ui composants modernes (Buttons, Cards, Inputs, Dialogs, Progress, Badges)
-
-Responsive : mobile / tablet / desktop
-
-Structure React
-src/
-├── components/
-│   ├── ui/
-│   ├── layout/
-│   ├── projects/
-│   └── tasks/
-├── pages/
-├── services/
-├── context/
-├── hooks/
-└── lib/
-
-🔐 Backend Features
-
-Auth JWT + BCrypt password hashing
-
-CRUD Projets & Tâches
-
-Suivi de progression des projets
-
-Validation et gestion des erreurs
-
-Architecture modulable et propre
-
-Architecture
-com.project.management
-├── audit
-├── config
-├── controller
-├── dtos
-│   ├── request
-│   └── response
-├── entity
-├── exception
-├── mapper
-├── repository
-├── security
-└── service
-
-API Endpoints
-
-Auth
-
-POST /api/v1/auth/register
-
-POST /api/v1/auth/login
-
-Projects
-
-GET /api/v1/projects
-
-POST /api/v1/projects
-
-GET /api/v1/projects/:id
-
-PUT /api/v1/projects/:id
-
-DELETE /api/v1/projects/:id
-
-GET /api/v1/projects/:id/progress
-
-Tasks
-
-GET /api/v1/projects/:projectId/tasks
-
-POST /api/v1/projects/:projectId/tasks
-
-GET /api/v1/projects/:projectId/tasks/:taskId
-
-PUT /api/v1/projects/:projectId/tasks/:taskId
-
-PATCH /api/v1/projects/:projectId/tasks/:taskId/complete
-
-DELETE /api/v1/projects/:projectId/tasks/:taskId
-
-⚙️ Database
-
-PostgreSQL
-
-Volume postgres-data pour persistance
-
-Backup
+```bash
 docker exec projecty-postgres pg_dump -U postgres projectydb > backup.sql
+```
 
-Restore
+To restore:
+```bash
 docker exec -i projecty-postgres psql -U postgres projectydb < backup.sql
+```
 
-🖥️ Production Recommendations
+## Development vs Production
 
-Utiliser Docker Secrets pour JWT et DB credentials
+### Development (current setup)
+- Exposes all ports
+- Hot reload not enabled (requires volume mounts)
+- Uses development environment variables
 
-Serveur HTTPS (Nginx / Traefik)
+### Production recommendations
+- Use secrets management (Docker Secrets, Kubernetes Secrets)
+- Enable HTTPS with reverse proxy (Nginx, Traefik)
+- Use production-grade PostgreSQL with backups
+- Implement health checks and monitoring
+- Use environment-specific configurations
+- Enable logging aggregation
 
-Monitoring et Health checks
+## Monitoring
 
-Configuration spécifique à l’environnement
+### Check container health
+```bash
+docker-compose ps
+docker stats
+```
 
-🧪 Tests
-Frontend
+### View resource usage
+```bash
+docker stats projecty-backend projecty-frontend projecty-postgres
+```
 
-Tester UI et routes React
+## Scaling
 
-Vérifier intercepteurs Axios et JWT
+To scale backend:
+```bash
+docker-compose up -d --scale backend=3
+```
 
-Backend
-cd backend
-mvn test
+Note: You'll need a load balancer (Nginx, HAProxy) for multiple backend instances.
 
-🎁 Bonus Features
+## Support
 
-Indication des tâches en retard
-
-Animation des transitions UI
-
-Confirmation avant suppression
-
-Etats de chargement
-
-📄 License
-
-MIT License
+For issues, check logs:
+```bash
+docker-compose logs -f
+```
