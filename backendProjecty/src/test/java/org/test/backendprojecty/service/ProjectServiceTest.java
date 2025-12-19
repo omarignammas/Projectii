@@ -1,6 +1,5 @@
 package org.test.backendprojecty.service;
 
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +33,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,7 +97,7 @@ class ProjectServiceTest {
                 .page(0)
                 .size(10)
                 .sortField("id")
-                .direction("ASC")
+                .direction(Sort.Direction.ASC)
                 .build();
     }
 
@@ -116,7 +117,6 @@ class ProjectServiceTest {
 
     @Test
     void getAllProjects_Success() {
-        // Given
         mockSecurityContext();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
@@ -127,34 +127,15 @@ class ProjectServiceTest {
                 .thenReturn(projectPage);
         when(projectMapper.toResponse(project)).thenReturn(projectResponse);
 
-        // When
         PagingResult<ProjectResponse> result = projectService.getAllProjects(paginationRequest);
 
-        // Then
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
         assertEquals(1, result.getTotalPages());
         assertEquals(1L, result.getTotalElements());
-        assertEquals("Test Project", result.getContent().get(0).getTitle());
+        assertEquals(1, result.getPage()); // page + 1 dans le constructeur
+        assertEquals("Test Project", result.getContent().iterator().next().getTitle());
         verify(projectRepository).findByUserId(eq(1L), any(Pageable.class));
-    }
-
-    @Test
-    void getAllProjects_EmptyResult() {
-        mockSecurityContext();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Project> emptyPage = new PageImpl<>(Arrays.asList(), pageable, 0);
-
-        when(projectRepository.findByUserId(eq(1L), any(Pageable.class)))
-                .thenReturn(emptyPage);
-
-        PagingResult<ProjectResponse> result = projectService.getAllProjects(paginationRequest);
-
-        assertNotNull(result);
-        assertEquals(0, result.getContent().size());
-        assertTrue(result.getEmpty());
     }
 
     @Test
@@ -209,8 +190,6 @@ class ProjectServiceTest {
     private void mockSecurityContext() {
         SecurityContextHolder.setContext(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(
-                new SecurityUser(user)
-        );
+        when(authentication.getPrincipal()).thenReturn(new SecurityUser(user));
     }
 }

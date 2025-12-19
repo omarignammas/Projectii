@@ -24,7 +24,7 @@ services:
   # Our Backend
   backend:
     build:
-      context: ./backend
+      context: ./backendProjecty
       dockerfile: Dockerfile
     container_name: projecty-backend
     environment:
@@ -45,7 +45,7 @@ services:
   # Our Frontend
   frontend:
     build:
-      context: ./frontend
+      context: ./frontendProjecty
       dockerfile: Dockerfile
     container_name: projecty-frontend
     environment:
