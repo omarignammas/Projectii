@@ -1,4 +1,4 @@
-```markdown
+
 # 🗂️ Project Management App
 
 Une application complète de gestion de projets et de tâches.
@@ -16,6 +16,7 @@ Une application complète de gestion de projets et de tâches.
 | **DevOps** | Docker, Docker Compose, Volumes de données |
 
 ---
+
 
 ## 🏗️ Architecture du Projet
 
