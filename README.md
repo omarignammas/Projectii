@@ -211,9 +211,6 @@ docker exec -i projecty-postgres psql -U admin projectydb < backup.sql
 ---
 
 ## 📄 Licence
-
-Distribué sous la licence MIT.
-
 ```
-
+Distribué sous la licence MIT.
 ```
