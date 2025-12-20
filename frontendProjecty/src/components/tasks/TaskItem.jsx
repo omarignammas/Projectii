@@ -7,16 +7,34 @@ import { Badge } from '../ui/badge';
 import EditTaskDialog from './EditTaskDialog';
 import taskService from '../../services/taskService';
 import { format, isPast } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog"
+import { useToast } from '../../hooks/use-toast'
 
 export const TaskItem = ({ task, projectId, onTaskUpdated, onTaskDeleted }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const {toast} = useToast();
 
   const handleToggleComplete = async () => {
     setUpdating(true);
     try {
       const updatedTask = await taskService.markTaskCompleted(projectId, task.id);
       onTaskUpdated(updatedTask);
+      toast({
+        title: "✅ Task updated",
+        description: `"${task.title}" has been successfully updated.`,
+        variant: "default",
+      })
     } catch (error) {
       console.error('Error updating task:', error);
     } finally {
@@ -25,14 +43,21 @@ export const TaskItem = ({ task, projectId, onTaskUpdated, onTaskDeleted }) => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this task?')) return;
-
     try {
       await taskService.deleteTask(projectId, task.id);
       onTaskDeleted(task.id);
+      toast({
+        title: "✅ Task deleted",
+        description: `"${task.title}" has been successfully deleted.`,
+        variant: "default",
+      })
     } catch (error) {
       console.error('Error deleting task:', error);
-      alert('Failed to delete task');
+      toast({
+        title: "❌ Error",
+        description: "Failed to delete task",
+        variant: "destructive",
+       })
     }
   };
 
@@ -84,14 +109,31 @@ export const TaskItem = ({ task, projectId, onTaskUpdated, onTaskDeleted }) => {
                       <Edit className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleDelete}
-                    className="text-destructive hover:text-destructive dark:text-rose-400 dark:hover:text-red-200"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive dark:text-rose-400 dark:hover:text-red-200"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your
+                              Task !
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} className='bg-red-500 hover:bg-red-600'>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                 </div>
               </div>
 

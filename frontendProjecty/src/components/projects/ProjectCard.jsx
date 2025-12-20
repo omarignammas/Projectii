@@ -11,13 +11,27 @@ import {
 import { Button } from '../ui/button'
 import { Progress } from '../ui/progress'
 import { Badge } from '../ui/badge'
+import { useToast } from '../../hooks/use-toast'
 import projectService from '../../services/projectService'
 import { format } from 'date-fns'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog"
 
 export const ProjectCard = ({ project, onDelete }) => {
   const [progress, setProgress] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  const { toast } = useToast()
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -31,25 +45,44 @@ export const ProjectCard = ({ project, onDelete }) => {
     fetchProgress()
   }, [project.id])
 
-  const handleDelete = async (e) => {
-    e.stopPropagation()
-    if (!window.confirm('Are you sure you want to delete this project?')) return
-
+  const handleDelete = async () => {
     setDeleting(true)
     try {
       await projectService.deleteProject(project.id)
+      
+      toast({
+        title: "✅ Project deleted",
+        description: `"${project.title}" has been successfully deleted.`,
+        variant: "default",
+      })
+      
       onDelete(project.id)
+      setOpen(false)
     } catch (error) {
       console.error('Error deleting project:', error)
-      alert('Failed to delete project')
+      
+      toast({
+        title: "❌ Error",
+        description: error.response?.data?.message || "Failed to delete project. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setDeleting(false)
     }
   }
 
+  const handleCardClick = () => {
+    navigate(`/projects/${project.id}`)
+  }
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation() 
+    setOpen(true)
+  }
+
   return (
     <Card
-      onClick={() => navigate(`/projects/${project.id}`)}
+      onClick={handleCardClick}
       className="
         cursor-pointer transition-all
         hover:shadow-md hover:shadow-blue-300
@@ -71,19 +104,45 @@ export const ProjectCard = ({ project, onDelete }) => {
             {project.title}
           </CardTitle>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDelete}
-            disabled={deleting}
-            className="
-              text-rose-500
-              hover:text-red-600
-              dark:text-rose-400 dark:hover:text-red-200
-            "
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDeleteClick}
+                className="
+                  text-rose-500
+                  hover:text-red-600
+                  dark:text-rose-400 dark:hover:text-red-200
+                "
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Project?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the project
+                  <strong className="text-blue-500"> "{project.title}" </strong>
+                  and all its tasks.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDelete()
+                  }}
+                  disabled={deleting}
+                  className='bg-red-500 hover:bg-red-600'
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardHeader>
 
@@ -128,7 +187,6 @@ export const ProjectCard = ({ project, onDelete }) => {
               dark:border-blue-400
               dark:hover:bg-blue-200
               dark:hover:text-blue-600
-
             "
           >
             {progress.totalTasks} tasks

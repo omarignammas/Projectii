@@ -8,6 +8,7 @@ import ProjectCard from '../components/projects/ProjectCard';
 import CreateProjectDialog from '../components/projects/CreateProjectDialog';
 import projectService from '../services/projectService';
 import { StatCard } from '../components/shared/StatCard';
+import {Toaster} from '../components/ui/toaster';
 
 export const DashboardPage = () => {
   const [projects, setProjects] = useState([]);
@@ -120,9 +121,8 @@ export const DashboardPage = () => {
     fetchProjects(page);
   }, [page]);
 
-  // Apply filters - CORRIGÉ ICI
   useEffect(() => {
-    let filtered = [...projectsWithProgress]; // Utiliser projectsWithProgress au lieu de projects
+    let filtered = [...projectsWithProgress]; 
 
     // Search filter
     if (searchTerm) {
@@ -132,13 +132,11 @@ export const DashboardPage = () => {
       );
     }
 
-    // Status filter - IMPLÉMENTÉ ICI
     if (statusFilter === 'completed') {
       filtered = filtered.filter(project => project.progress === 100);
     } else if (statusFilter === 'in-progress') {
       filtered = filtered.filter(project => project.progress < 100);
     }
-    // 'all' ne nécessite pas de filtre
 
     setFilteredProjects(filtered);
   }, [searchTerm, statusFilter, projectsWithProgress]);
@@ -165,6 +163,7 @@ export const DashboardPage = () => {
 
   return (
     <>
+      
       <Navbar />
       <div className="container mx-auto px-4 py-8 font-mono">
         {/* Stats Cards with Circular Progress */}

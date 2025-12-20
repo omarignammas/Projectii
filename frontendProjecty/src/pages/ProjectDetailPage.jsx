@@ -10,6 +10,9 @@ import CreateTaskDialog from '../components/tasks/CreateTaskDialog';
 import EditProjectDialog from '../components/projects/EditProjectDialog';
 import projectService from '../services/projectService';
 import taskService from '../services/taskService';
+import {Toaster} from '../components/ui/toaster';
+
+
 
 export const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -20,7 +23,7 @@ export const ProjectDetailPage = () => {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Pagination states
+  // Pagination states
   const [page, setPage] = useState(1);
   const [size] = useState(5);
   const [totalPages, setTotalPages] = useState(0);
@@ -216,5 +219,7 @@ export const ProjectDetailPage = () => {
     </>
   );
 };
+
+
 
 export default ProjectDetailPage;

@@ -7,12 +7,14 @@ import DashboardPage from './pages/DashboardPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import {ThemeProvider} from './components/theme/theme-provider';
 import './App.css'
+import { Toaster } from './components/ui/toaster';
 
 
 function App() {
   return (
+    
   <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-  
+    <Toaster/>
     <Router>
       <AuthProvider>
         <Routes>

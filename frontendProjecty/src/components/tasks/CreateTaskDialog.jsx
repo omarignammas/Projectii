@@ -4,14 +4,21 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import {Popover,PopoverContent,PopoverTrigger} from '../ui/popover'
+import {Calendar} from '../ui/calendar'
 import taskService from '../../services/taskService';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+
+
 
 export const CreateTaskDialog = ({ projectId, open, onOpenChange, onTaskCreated }) => {
+
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    dueDate: '',
-  });
+  title: '',
+  description: '',
+  })
+  const [dueDate, setDueDate] = useState(undefined)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,20 +27,27 @@ export const CreateTaskDialog = ({ projectId, open, onOpenChange, onTaskCreated 
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  e.preventDefault()
+  setError('')
+  setLoading(true)
 
-    try {
-      const newTask = await taskService.createTask(projectId, formData);
-      onTaskCreated(newTask);
-      setFormData({ title: '', description: '', dueDate: '' });
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create task');
-    } finally {
-      setLoading(false);
+  try {
+    const payload = {
+      ...formData,
+      dueDate: format(dueDate, 'yyyy-MM-dd'),
     }
-  };
+
+    const newTask = await taskService.createTask(projectId, payload)
+    onTaskCreated(newTask)
+    setFormData({ title: '', description: '' })
+    setDueDate(undefined)
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to create task')
+  } finally {
+    setLoading(false)
+  }
+}
+
 
   const handleClose = () => {
     setFormData({ title: '', description: '', dueDate: '' });
@@ -84,25 +98,43 @@ export const CreateTaskDialog = ({ projectId, open, onOpenChange, onTaskCreated 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date *</Label>
-              <Input
-                id="dueDate"
-                name="dueDate"
-                type="date"
-                value={formData.dueDate}
-                onChange={handleChange}
-                required
-              />
+              <Label>Due Date *</Label>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={`w-full  justify-start text-left font-normal ${
+                      !dueDate && 'text-muted-foreground'
+                    }`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate ? format(dueDate, 'PPP') : 'Pick a date'}
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                    className="rounded-lg border"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
+
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !dueDate}>
               {loading ? 'Creating...' : 'Create Task'}
             </Button>
+
           </DialogFooter>
         </form>
       </DialogContent>
