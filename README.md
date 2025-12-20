@@ -1,79 +1,106 @@
-
 # 🗂️ Project Management App
 
-Une application complète de gestion de projets et de tâches.
-**Stack :** Frontend React (Vite/shadcn), Backend Spring Boot (JWT), Base de données PostgreSQL.
+A comprehensive full-stack application for managing projects and tasks efficiently.
+**Stack:** Frontend React (Vite/shadcn), Backend Spring Boot (JWT), Database PostgreSQL.
 
 ---
 
-## 🧰 Technologies Utilisées
+## 🧰 Tech Stack
 
-| Secteur | Technologies |
-| :--- | :--- |
+| Category | Technologies |
+| --- | --- |
 | **Frontend** | React, Vite, shadcn/ui, Tailwind CSS, React Router DOM, Axios, date-fns |
 | **Backend** | Java 17+, Spring Boot, Spring Data JPA, JWT Authentication, Maven |
+| **Testing** | JUnit 5, Mockito (>70% Coverage) |
 | **Database** | PostgreSQL 12+ |
-| **DevOps** | Docker, Docker Compose, Volumes de données |
+| **DevOps** | Docker, Docker Compose, Data Volumes |
 
 ---
 
+## ✨ Key Features & Flows
 
-## 🏗️ Architecture du Projet
+### 🎨 UI & UX
 
-L'architecture est modulaire pour assurer la maintenabilité et la scalabilité.
+* **Dark Mode Support:** Fully responsive interface with seamless Dark/Light mode switching using Tailwind CSS.
+* **Modern Design:** Built with `shadcn/ui` for accessible and elegant components.
+* **Responsive:** Optimized for Mobile, Tablet, and Desktop.
 
-### 📂 Structure Frontend (React)
+### ⚙️ Core Functionality
+
+* **Secure Authentication:** Full JWT implementation (Login, Register) with BCrypt password encoding and protected React routes.
+* **Complete CRUDs:** Create, Read, Update, and Delete operations for both Projects and Tasks.
+* **Pagination:** Implemented on both Frontend and Backend for optimized performance with large datasets.
+
+### 📊 Insights & Feedback
+
+* **Project Stats:** Dynamic progress bars and calculation of project completion rates.
+* **Visual Alerts:** Visual indicators for overdue tasks.
+* **User Feedback:** Skeleton loading states, confirmation modals, and toast notifications.
+
+### 🏗️ Engineering
+
+* **Unit Testing:** Comprehensive test suite with over **70% code coverage**.
+* **Dockerized:** Full `docker-compose` setup for easy deployment.
+
+---
+
+## 🏗️ Project Architecture
+
+The architecture is modular to ensure maintainability and scalability.
+
+### 📂 Frontend Structure (React)
+
 ```text
 src/
 ├── components/
-│   ├── ui/          # Composants de base (shadcn/ui)
+│   ├── ui/          # Base components (shadcn/ui)
 │   ├── layout/      # Navbar, Sidebar, Layout wrappers
-│   ├── projects/    # Composants spécifiques aux Projets
-│   └── tasks/       # Composants spécifiques aux Tâches
-├── pages/           # Pages principales (Dashboard, Login, ProjectDetails)
-├── services/        # Configuration Axios et appels API
-├── context/         # Gestion d'état global (AuthContext)
-├── hooks/           # Custom Hooks (ex: useAuth)
-└── lib/             # Utilitaires (formatage dates, classes CSS)
+│   ├── projects/    # Project-specific components
+│   └── tasks/       # Task-specific components
+├── pages/           # Main pages (Dashboard, Login, ProjectDetails)
+├── services/        # Axios config and API calls
+├── context/         # Global state management (AuthContext)
+├── hooks/           # Custom Hooks (e.g., useAuth, useTheme)
+└── lib/             # Utilities (Date formatting, CSS classes)
 
 ```
 
-### 📂 Structure Backend (Spring Boot)
+### 📂 Backend Structure (Spring Boot)
 
 ```text
 com.project.management
-├── audit            # Gestion automatique des dates (created_at, updated_at)
-├── config           # Sécurité (SecurityConfig), CORS, Swagger
-├── controller       # Couche de présentation (API REST)
-├── dtos             # Objets de transfert de données
-│   ├── request      # DTOs entrants
-│   └── response     # DTOs sortants
-├── entity           # Entités JPA (Project, Task, User)
-├── exception        # Gestion globale des erreurs (GlobalExceptionHandler)
-├── mapper           # Mapping Entity <-> DTO
-├── repository       # Interfaces Spring Data JPA
-├── security         # Filtres JWT, UserDetailsServiceImpl
-└── service          # Logique métier
+├── audit            # Automatic auditing (created_at, updated_at)
+├── config           # Security (SecurityConfig), CORS, Swagger
+├── controller       # Presentation layer (REST API)
+├── dtos             # Data Transfer Objects
+│   ├── request      # Input DTOs
+│   └── response     # Output DTOs
+├── entity           # JPA Entities (Project, Task, User)
+├── exception        # Global Error Handling (GlobalExceptionHandler)
+├── mapper           # Entity <-> DTO Mapping
+├── repository       # Spring Data JPA Interfaces
+├── security         # JWT Filters, UserDetailsServiceImpl
+└── service          # Business Logic
 
 ```
 
 ---
 
-## 📦 Installation et Lancement (Docker)
+## 📦 Installation & Setup (Docker)
 
-C'est la méthode recommandée pour lancer tout l'environnement rapidement.
+This is the recommended method to get the entire environment running quickly.
 
-### 1️⃣ Cloner le projet
+### 1️⃣ Clone the repository
 
 ```bash
-git clone <votre-repo>
+git clone <your-repo-url>
 cd projectii
 
 ```
 
-### 2️⃣ Configuration des variables d'environnement
+### 2️⃣ Environment Configuration
 
-Créez un fichier `.env` à la racine du projet :
+Create a `.env` file at the root of the project:
 
 ```env
 # Database Configuration
@@ -90,27 +117,27 @@ VITE_API_URL=http://localhost:8080/api/v1
 
 ```
 
-### 3️⃣ Lancer les services
+### 3️⃣ Start Services
 
 ```bash
-# Lancer les conteneurs en arrière-plan
+# Build and start containers in the background
 docker-compose up -d --build
 
-# Vérifier que tout tourne (frontend:3000, backend:8080, db:5432)
+# Verify services are running (frontend:3000, backend:8080, db:5432)
 docker-compose ps
 
 ```
 
-Pour voir les logs en temps réel :
+To view real-time logs:
 
 ```bash
 docker-compose logs -f backend
-# ou
+# or
 docker-compose logs -f frontend
 
 ```
 
-### 4️⃣ Arrêter les services
+### 4️⃣ Stop Services
 
 ```bash
 docker-compose down
@@ -119,9 +146,9 @@ docker-compose down
 
 ---
 
-## 🚀 Lancement Local (Sans Docker)
+## 🚀 Local Setup (Without Docker)
 
-Si vous préférez lancer les services manuellement sur votre machine.
+If you prefer running services manually on your machine.
 
 ### Backend
 
@@ -132,7 +159,7 @@ mvn spring-boot:run
 
 ```
 
-> API accessible sur : `http://localhost:8080`
+> API accessible at: `http://localhost:8080`
 
 ### Frontend
 
@@ -143,55 +170,55 @@ npm run dev
 
 ```
 
-> Application accessible sur : `http://localhost:3000`
+> Application accessible at: `http://localhost:3000`
 
 ---
 
 ## 📡 API Endpoints
 
-Préfixe global : `/api/v1`
+Global Prefix: `/api/v1`
 
-### 🔐 Authentification
+### 🔐 Authentication
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 | --- | --- | --- |
-| `POST` | `/auth/register` | Inscription nouvel utilisateur |
-| `POST` | `/auth/login` | Connexion et récupération du Token JWT |
+| `POST` | `/auth/register` | Register a new user |
+| `POST` | `/auth/login` | Login and retrieve JWT Token |
 
-### 📁 Projets
+### 📁 Projects
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 | --- | --- | --- |
-| `GET` | `/projects` | Liste de tous les projets |
-| `POST` | `/projects` | Créer un projet |
-| `GET` | `/projects/:id` | Détails d'un projet |
-| `PUT` | `/projects/:id` | Mettre à jour un projet |
-| `DELETE` | `/projects/:id` | Supprimer un projet |
-| `GET` | `/projects/:id/progress` | Obtenir le % de progression |
+| `GET` | `/projects` | List all projects (with pagination) |
+| `POST` | `/projects` | Create a new project |
+| `GET` | `/projects/:id` | Get project details |
+| `PUT` | `/projects/:id` | Update a project |
+| `DELETE` | `/projects/:id` | Delete a project |
+| `GET` | `/projects/:id/progress` | Get completion percentage stats |
 
-### ✅ Tâches
+### ✅ Tasks
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 | --- | --- | --- |
-| `GET` | `/projects/:id/tasks` | Tâches d'un projet spécifique |
-| `POST` | `/projects/:id/tasks` | Créer une tâche dans un projet |
-| `PATCH` | `/tasks/:id/complete` | Marquer comme terminée |
-| `DELETE` | `/tasks/:id` | Supprimer une tâche |
+| `GET` | `/projects/:id/tasks` | List tasks for a specific project |
+| `POST` | `/projects/:id/tasks` | Create a task within a project |
+| `PATCH` | `/tasks/:id/complete` | Mark task as completed |
+| `DELETE` | `/tasks/:id` | Delete a task |
 
 ---
 
-## ⚙️ Maintenance Base de Données
+## ⚙️ Database Maintenance
 
-Les données sont persistées via le volume Docker `postgres-data`.
+Data is persisted via the `postgres-data` Docker volume.
 
-**Sauvegarder la base (Backup) :**
+**Backup Database:**
 
 ```bash
 docker exec projecty-postgres pg_dump -U admin projectydb > backup.sql
 
 ```
 
-**Restaurer la base (Restore) :**
+**Restore Database:**
 
 ```bash
 docker exec -i projecty-postgres psql -U admin projectydb < backup.sql
@@ -200,17 +227,9 @@ docker exec -i projecty-postgres psql -U admin projectydb < backup.sql
 
 ---
 
-## ✨ Fonctionnalités Clés
+## 📄 License
 
-* **Auth Sécurisée :** JWT + BCrypt, Routes protégées côté React.
-* **UI Moderne :** Utilisation de `shadcn/ui` pour des composants accessibles et élégants.
-* **Gestion de Tâches :** Alertes visuelles pour les tâches en retard, barres de progression dynamiques.
-* **Responsive :** Interface adaptée Mobile, Tablette et Desktop.
-* **Feedback Utilisateur :** États de chargement (skeletons), Modales de confirmation, Toasts de notification.
+```text
+Distributed under the MIT License.
 
----
-
-## 📄 Licence
-```
-Distribué sous la licence MIT.
 ```
