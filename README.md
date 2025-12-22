@@ -282,9 +282,8 @@ docker exec -i projecty-postgres psql -U admin projectydb < backup.sql
 ---
 
 
-## 📸 Screenshots
 
-<div align="center">
+<!-- <div align="center">
 
 ### Dashboard
 <img src="https://via.placeholder.com/800x400/0077B5/FFFFFF?text=Dashboard+Screenshot" alt="Dashboard" width="80%" />
@@ -295,7 +294,7 @@ docker exec -i projecty-postgres psql -U admin projectydb < backup.sql
 ### Dark Mode
 <img src="https://via.placeholder.com/800x400/1a1a1a/FFFFFF?text=Dark+Mode+Screenshot" alt="Dark Mode" width="80%" />
 
-</div>
+</div> -->
 
 ---
 
