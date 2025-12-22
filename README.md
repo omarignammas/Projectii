@@ -1,48 +1,101 @@
 # 🗂️ Project Management App
 
-A comprehensive full-stack application for managing projects and tasks efficiently.
-**Stack:** Frontend React (Vite/shadcn), Backend Spring Boot (JWT), Database PostgreSQL.
+  
+  <p>
+    <strong>A comprehensive full-stack application for managing projects and tasks efficiently</strong>
+  </p>
+  
+  <p>
+    <img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React" />
+    <img src="https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
+    <img src="https://img.shields.io/badge/PostgreSQL-12+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    <img src="https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  </p>
+
+</div>
+
+<br>
+
+---
+
+## 🎯 Overview
+
+<table>
+<tr>
+<td width="50%">
+
+### 🎨 Frontend
+- **Framework:** React + Vite
+- **UI Library:** shadcn/ui + Tailwind CSS
+- **Routing:** React Router DOM
+- **HTTP Client:** Axios
+- **State Management:** Context API
+
+</td>
+<td width="50%">
+
+### ⚙️ Backend
+- **Framework:** Spring Boot 3.2
+- **Authentication:** JWT (BCrypt)
+- **ORM:** Spring Data JPA
+- **Database:** PostgreSQL 12+
+- **Testing:** JUnit 5 + Mockito (70%+ coverage)
+
+</td>
+</tr>
+</table>
+
+---
+
+## ✨ Key Features
+
+<div align="center">
+
+| Feature | Description |
+|---------|-------------|
+| 🔐 **Secure Authentication** | JWT-based auth with BCrypt password hashing |
+| 📝 **Complete CRUD Operations** | Full Create, Read, Update, Delete for Projects & Tasks |
+| 📊 **Real-time Progress Tracking** | Dynamic progress bars and completion statistics |
+| 📱 **Responsive Design** | Optimized for Mobile, Tablet, and Desktop |
+| 🌓 **Dark Mode Support** | Seamless theme switching with Tailwind CSS |
+| 📄 **Advanced Pagination** | Frontend & Backend pagination for large datasets |
+| 🧪 **Comprehensive Testing** | 70%+ code coverage with JUnit & Mockito |
+| 🐳 **Fully Dockerized** | One-command deployment with Docker Compose |
+
+</div>
 
 ---
 
 ## 🧰 Tech Stack
 
-| Category | Technologies |
-| --- | --- |
-| **Frontend** | React, Vite, shadcn/ui, Tailwind CSS, React Router DOM, Axios, date-fns |
-| **Backend** | Java 17+, Spring Boot, Spring Data JPA, JWT Authentication, Maven |
-| **Testing** | JUnit 5, Mockito (>70% Coverage) |
-| **Database** | PostgreSQL 12+ |
-| **DevOps** | Docker, Docker Compose, Data Volumes |
+<div align="center">
+
+### Frontend Technologies
+<p>
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Frontend/react-original-wordmark.svg" alt="React" width="50" height="50" />
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Frontend/tailwindcss-icon.svg" alt="Tailwind" width="50" height="50" />
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Languages/javascript-original.svg" alt="JavaScript" width="50" height="50" />
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Languages/typescript-original.svg" alt="TypeScript" width="50" height="50" />
+</p>
+
+### Backend Technologies
+<p>
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Languages/java-original.svg" alt="Java" width="50" height="50" />
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Backend/springio-icon.svg" alt="Spring Boot" width="50" height="50" />
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Database/postgresql-original-wordmark.svg" alt="PostgreSQL" width="50" height="50" />
+</p>
+
+### DevOps & Tools
+<p>
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Devops/docker-original-wordmark.svg" alt="Docker" width="50" height="50" />
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Other/git-scm-icon.svg" alt="Git" width="50" height="50" />
+  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Software/getpostman-icon.svg" alt="Postman" width="50" height="50" />
+</p>
+
+</div>
 
 ---
 
-## ✨ Key Features & Flows
-
-### 🎨 UI & UX
-
-* **Dark Mode Support:** Fully responsive interface with seamless Dark/Light mode switching using Tailwind CSS.
-* **Modern Design:** Built with `shadcn/ui` for accessible and elegant components.
-* **Responsive:** Optimized for Mobile, Tablet, and Desktop.
-
-### ⚙️ Core Functionality
-
-* **Secure Authentication:** Full JWT implementation (Login, Register) with BCrypt password encoding and protected React routes.
-* **Complete CRUDs:** Create, Read, Update, and Delete operations for both Projects and Tasks.
-* **Pagination:** Implemented on both Frontend and Backend for optimized performance with large datasets.
-
-### 📊 Insights & Feedback
-
-* **Project Stats:** Dynamic progress bars and calculation of project completion rates.
-* **Visual Alerts:** Visual indicators for overdue tasks.
-* **User Feedback:** Skeleton loading states, confirmation modals, and toast notifications.
-
-### 🏗️ Engineering
-
-* **Unit Testing:** Comprehensive test suite with over **70% code coverage**.
-* **Dockerized:** Full `docker-compose` setup for easy deployment.
-
----
 
 ## 🏗️ Project Architecture
 
@@ -86,22 +139,24 @@ com.project.management
 
 ---
 
-## 📦 Installation & Setup (Docker)
 
-This is the recommended method to get the entire environment running quickly.
+## 📦 Installation & Setup
+
+<div align="center">
+
+### 🐳 Docker Setup (Recommended)
+
+</div>
 
 ### 1️⃣ Clone the repository
-
 ```bash
-git clone <your-repo-url>
-cd projectii
-
+git clone https://github.com/yourusername/project-management-app.git
+cd project-management-app
 ```
 
 ### 2️⃣ Environment Configuration
 
-Create a `.env` file at the root of the project:
-
+Create a `.env` file at the root:
 ```env
 # Database Configuration
 POSTGRES_DB=projectydb
@@ -114,122 +169,176 @@ JWT_EXPIRATION=86400000
 
 # API URL (Frontend connection)
 VITE_API_URL=http://localhost:8080/api/v1
-
 ```
 
 ### 3️⃣ Start Services
-
 ```bash
-# Build and start containers in the background
+# Build and start all containers
 docker-compose up -d --build
 
-# Verify services are running (frontend:3000, backend:8080, db:5432)
+# Check services status
 docker-compose ps
 
-```
-
-To view real-time logs:
-
-```bash
+# View logs
 docker-compose logs -f backend
-# or
-docker-compose logs -f frontend
-
 ```
+
+<div align="center">
+
+| Service | URL |
+|---------|-----|
+| 🎨 Frontend | http://localhost:3000 |
+| ⚙️ Backend API | http://localhost:8080 |
+| 🗄️ PostgreSQL | localhost:5432 |
+
+</div>
 
 ### 4️⃣ Stop Services
-
 ```bash
 docker-compose down
-
 ```
 
 ---
 
-## 🚀 Local Setup (Without Docker)
-
-If you prefer running services manually on your machine.
+<details>
+<summary><b>🚀 Local Setup (Without Docker)</b></summary>
 
 ### Backend
-
 ```bash
 cd backend
 mvn clean install
 mvn spring-boot:run
-
 ```
 
 > API accessible at: `http://localhost:8080`
 
 ### Frontend
-
 ```bash
 cd frontend
 npm install
 npm run dev
-
 ```
 
 > Application accessible at: `http://localhost:3000`
+
+</details>
 
 ---
 
 ## 📡 API Endpoints
 
-Global Prefix: `/api/v1`
+<div align="center">
+
+**Global Prefix:** `/api/v1`
+
+</div>
 
 ### 🔐 Authentication
 
 | Method | Endpoint | Description |
-| --- | --- | --- |
+|--------|----------|-------------|
 | `POST` | `/auth/register` | Register a new user |
 | `POST` | `/auth/login` | Login and retrieve JWT Token |
 
 ### 📁 Projects
 
 | Method | Endpoint | Description |
-| --- | --- | --- |
+|--------|----------|-------------|
 | `GET` | `/projects` | List all projects (with pagination) |
 | `POST` | `/projects` | Create a new project |
 | `GET` | `/projects/:id` | Get project details |
 | `PUT` | `/projects/:id` | Update a project |
 | `DELETE` | `/projects/:id` | Delete a project |
-| `GET` | `/projects/:id/progress` | Get completion percentage stats |
+| `GET` | `/projects/:id/progress` | Get completion percentage |
 
 ### ✅ Tasks
 
 | Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/projects/:id/tasks` | List tasks for a specific project |
+|--------|----------|-------------|
+| `GET` | `/projects/:id/tasks` | List tasks for a project |
 | `POST` | `/projects/:id/tasks` | Create a task within a project |
 | `PATCH` | `/tasks/:id/complete` | Mark task as completed |
 | `DELETE` | `/tasks/:id` | Delete a task |
 
 ---
 
-## ⚙️ Database Maintenance
+## 🗄️ Database Maintenance
 
-Data is persisted via the `postgres-data` Docker volume.
+<details>
+<summary><b>Database Backup & Restore</b></summary>
 
 **Backup Database:**
-
 ```bash
 docker exec projecty-postgres pg_dump -U admin projectydb > backup.sql
-
 ```
 
 **Restore Database:**
-
 ```bash
 docker exec -i projecty-postgres psql -U admin projectydb < backup.sql
-
 ```
+
+</details>
 
 ---
 
-## 📄 License
 
-```text
-Distributed under the MIT License.
+## 📸 Screenshots
 
-```
+<div align="center">
+
+### Dashboard
+<img src="https://via.placeholder.com/800x400/0077B5/FFFFFF?text=Dashboard+Screenshot" alt="Dashboard" width="80%" />
+
+### Project Details
+<img src="https://via.placeholder.com/800x400/00D4FF/FFFFFF?text=Project+Details+Screenshot" alt="Project Details" width="80%" />
+
+### Dark Mode
+<img src="https://via.placeholder.com/800x400/1a1a1a/FFFFFF?text=Dark+Mode+Screenshot" alt="Dark Mode" width="80%" />
+
+</div>
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📝 License
+
+<div align="center">
+
+Distributed under the **MIT License**. See `LICENSE` for more information.
+
+</div>
+
+---
+
+## 👨‍💻 Author
+
+<div align="center">
+
+**Omar Ignammas**
+
+[![LinkedIn](https://img.shields.io/badge/-LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/omar-ignammas)
+[![GitHub](https://img.shields.io/badge/-GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/omarignammas)
+[![Portfolio](https://img.shields.io/badge/-Portfolio-FF5722?style=for-the-badge&logo=google-chrome&logoColor=white)](https://ignmas.me)
+
+</div>
+
+---
+
+<div align="center">
+
+### ⭐️ Star this repository if you find it helpful!
+
+<img src="https://raw.githubusercontent.com/Trilokia/Trilokia/379277808c61ef204768a61bbc5d25bc7798ccf1/bottom_header.svg" width="100%" />
+
+</div>
