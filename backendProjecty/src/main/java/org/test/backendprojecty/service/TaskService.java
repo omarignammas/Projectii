@@ -11,6 +11,7 @@ import org.test.backendprojecty.dtos.request.TaskRequest;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.dtos.response.TaskResponse;
 import org.test.backendprojecty.entity.Course;
+import org.test.backendprojecty.entity.NotificationType;
 import org.test.backendprojecty.entity.Task;
 import org.test.backendprojecty.entity.TaskPriority;
 import org.test.backendprojecty.entity.TaskType;
@@ -22,18 +23,23 @@ import org.test.backendprojecty.repository.CourseRepository;
 import org.test.backendprojecty.repository.TaskRepository;
 import org.test.backendprojecty.security.CurrentUserProvider;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TaskService {
 
+    private static final Set<Integer> STREAK_MILESTONES = Set.of(3, 7, 14, 30, 60, 100);
+
     private final TaskRepository taskRepository;
     private final CourseRepository courseRepository;
     private final TaskMapper taskMapper;
     private final CurrentUserProvider currentUserProvider;
+    private final NotificationService notificationService;
 
     private Course resolveCourse(Long courseId, User currentUser) {
         if (courseId == null) {
@@ -130,7 +136,69 @@ public class TaskService {
         task.setCompleted(nowCompleted);
         task.setCompletedAt(nowCompleted ? LocalDateTime.now() : null);
         task = taskRepository.save(task);
+
+        if (nowCompleted) {
+            notifyIfCourseCompleted(task, currentUser);
+            notifyIfStreakMilestone(currentUser);
+        }
+
         return taskMapper.toResponse(task);
+    }
+
+    private void notifyIfCourseCompleted(Task task, User currentUser) {
+        if (task.getCourse() == null) {
+            return;
+        }
+        Long courseId = task.getCourse().getId();
+        long total = taskRepository.countByCourseId(courseId);
+        long completedCount = taskRepository.countByCourseIdAndCompleted(courseId, true);
+        if (total > 0 && total == completedCount) {
+            notificationService.notify(
+                    currentUser,
+                    NotificationType.COURSE_COMPLETED,
+                    "Course completed",
+                    task.getCourse().getTitle() + " — 100% done.",
+                    "/courses/" + courseId
+            );
+        }
+    }
+
+    private void notifyIfStreakMilestone(User currentUser) {
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        LocalDateTime startOfTomorrow = startOfToday.plusDays(1);
+        boolean isFirstCompletionToday = taskRepository
+                .countByUserIdAndCompletedTrueAndCompletedAtBetween(currentUser.getId(), startOfToday, startOfTomorrow) == 1;
+        if (!isFirstCompletionToday) {
+            return;
+        }
+
+        int streak = computeStreak(currentUser.getId());
+        if (STREAK_MILESTONES.contains(streak)) {
+            notificationService.notify(
+                    currentUser,
+                    NotificationType.STREAK_MILESTONE,
+                    "Streak",
+                    streak + " days running — don't break it today.",
+                    "/stats"
+            );
+        }
+    }
+
+    private int computeStreak(Long userId) {
+        Set<LocalDate> completedDays = taskRepository.findCompletedTimestampsByUserId(userId).stream()
+                .map(LocalDateTime::toLocalDate)
+                .collect(Collectors.toSet());
+
+        LocalDate cursor = LocalDate.now();
+        if (!completedDays.contains(cursor)) {
+            cursor = cursor.minusDays(1);
+        }
+        int streak = 0;
+        while (completedDays.contains(cursor)) {
+            streak++;
+            cursor = cursor.minusDays(1);
+        }
+        return streak;
     }
 
     @Transactional

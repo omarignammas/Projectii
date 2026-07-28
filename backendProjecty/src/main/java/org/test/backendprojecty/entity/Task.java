@@ -42,6 +42,10 @@ public class Task {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime completedAt;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean reminderSent = false;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

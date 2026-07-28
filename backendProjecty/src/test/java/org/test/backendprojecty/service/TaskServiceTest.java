@@ -16,6 +16,7 @@ import org.test.backendprojecty.dtos.request.TaskRequest;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.dtos.response.TaskResponse;
 import org.test.backendprojecty.entity.Course;
+import org.test.backendprojecty.entity.NotificationType;
 import org.test.backendprojecty.entity.Task;
 import org.test.backendprojecty.entity.User;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
@@ -27,6 +28,7 @@ import org.test.backendprojecty.security.CurrentUserProvider;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,6 +50,9 @@ class TaskServiceTest {
 
     @Mock
     private CurrentUserProvider currentUserProvider;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private TaskService taskService;
@@ -191,6 +196,95 @@ class TaskServiceTest {
 
         assertFalse(task.isCompleted());
         assertNull(task.getCompletedAt());
+        verifyNoInteractions(notificationService);
+    }
+
+    @Test
+    void markTaskAsCompleted_CourseFullyCompleted_NotifiesCourseCompleted() {
+        when(taskRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(task));
+        when(taskRepository.save(task)).thenReturn(task);
+        when(taskMapper.toResponse(task)).thenReturn(taskResponse);
+        when(taskRepository.countByCourseId(1L)).thenReturn(3L);
+        when(taskRepository.countByCourseIdAndCompleted(1L, true)).thenReturn(3L);
+
+        taskService.markTaskAsCompleted(1L);
+
+        verify(notificationService).notify(
+                eq(user), eq(NotificationType.COURSE_COMPLETED), anyString(),
+                eq("Test Course — 100% done."), eq("/courses/1"));
+    }
+
+    @Test
+    void markTaskAsCompleted_CourseNotFullyCompleted_DoesNotNotify() {
+        when(taskRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(task));
+        when(taskRepository.save(task)).thenReturn(task);
+        when(taskMapper.toResponse(task)).thenReturn(taskResponse);
+        when(taskRepository.countByCourseId(1L)).thenReturn(3L);
+        when(taskRepository.countByCourseIdAndCompleted(1L, true)).thenReturn(2L);
+
+        taskService.markTaskAsCompleted(1L);
+
+        verify(notificationService, never()).notify(any(), eq(NotificationType.COURSE_COMPLETED), any(), any(), any());
+    }
+
+    @Test
+    void markTaskAsCompleted_NoCourse_DoesNotCheckCourseCompletion() {
+        Task personalTask = Task.builder().id(3L).title("Personal").completed(false).user(user).build();
+        when(taskRepository.findByIdAndUserId(3L, 1L)).thenReturn(Optional.of(personalTask));
+        when(taskRepository.save(personalTask)).thenReturn(personalTask);
+        when(taskMapper.toResponse(personalTask)).thenReturn(taskResponse);
+
+        taskService.markTaskAsCompleted(3L);
+
+        verify(taskRepository, never()).countByCourseId(any());
+        verify(notificationService, never()).notify(any(), eq(NotificationType.COURSE_COMPLETED), any(), any(), any());
+    }
+
+    @Test
+    void markTaskAsCompleted_StreakMilestoneReached_NotifiesStreak() {
+        when(taskRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(task));
+        when(taskRepository.save(task)).thenReturn(task);
+        when(taskMapper.toResponse(task)).thenReturn(taskResponse);
+        when(taskRepository.countByUserIdAndCompletedTrueAndCompletedAtBetween(eq(1L), any(), any())).thenReturn(1L);
+
+        LocalDate today = LocalDate.now();
+        when(taskRepository.findCompletedTimestampsByUserId(1L)).thenReturn(List.of(
+                today.atTime(9, 0),
+                today.minusDays(1).atTime(9, 0),
+                today.minusDays(2).atTime(9, 0)
+        ));
+
+        taskService.markTaskAsCompleted(1L);
+
+        verify(notificationService).notify(
+                eq(user), eq(NotificationType.STREAK_MILESTONE), anyString(),
+                eq("3 days running — don't break it today."), eq("/stats"));
+    }
+
+    @Test
+    void markTaskAsCompleted_StreakNotAtMilestone_DoesNotNotify() {
+        when(taskRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(task));
+        when(taskRepository.save(task)).thenReturn(task);
+        when(taskMapper.toResponse(task)).thenReturn(taskResponse);
+        when(taskRepository.countByUserIdAndCompletedTrueAndCompletedAtBetween(eq(1L), any(), any())).thenReturn(1L);
+        when(taskRepository.findCompletedTimestampsByUserId(1L)).thenReturn(List.of(LocalDate.now().atTime(9, 0)));
+
+        taskService.markTaskAsCompleted(1L);
+
+        verify(notificationService, never()).notify(any(), eq(NotificationType.STREAK_MILESTONE), any(), any(), any());
+    }
+
+    @Test
+    void markTaskAsCompleted_NotFirstCompletionToday_SkipsStreakCheck() {
+        when(taskRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(task));
+        when(taskRepository.save(task)).thenReturn(task);
+        when(taskMapper.toResponse(task)).thenReturn(taskResponse);
+        when(taskRepository.countByUserIdAndCompletedTrueAndCompletedAtBetween(eq(1L), any(), any())).thenReturn(2L);
+
+        taskService.markTaskAsCompleted(1L);
+
+        verify(taskRepository, never()).findCompletedTimestampsByUserId(any());
+        verify(notificationService, never()).notify(any(), eq(NotificationType.STREAK_MILESTONE), any(), any(), any());
     }
 
     @Test

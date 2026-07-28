@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { LogOut, UserCircle, Settings } from 'lucide-react';
+import { LogOut, UserCircle, Settings, Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { ModeToggle } from '../ui/mode-toggle';
 import {
@@ -23,6 +23,7 @@ export const AppShell = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const { notifications, unreadCount, markRead, markAllRead } = useNotificationSocket(!!user);
 
   const handleLogout = () => {
@@ -41,11 +42,25 @@ export const AppShell = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar onQuickAdd={() => setIsQuickAddOpen(true)} />
+      <Sidebar
+        onQuickAdd={() => setIsQuickAddOpen(true)}
+        mobileOpen={isMobileNavOpen}
+        onMobileClose={() => setIsMobileNavOpen(false)}
+      />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="z-40 flex shrink-0 items-center justify-end gap-3 border-b border-border/80 bg-background/80 px-6 py-3 backdrop-blur-md">
-          <ModeToggle />
+        <header className="z-40 flex shrink-0 items-center justify-between gap-3 border-b border-border/80 bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6 md:justify-end">
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen(true)}
+            aria-label="Open menu"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
+          <div className="flex items-center gap-3">
+            <ModeToggle />
 
           {user && (
             <NotificationBell
@@ -89,6 +104,7 @@ export const AppShell = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto">
