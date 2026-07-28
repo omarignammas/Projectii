@@ -4,14 +4,34 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import taskService from '../../services/taskService';
+import courseService from '../../services/courseService';
 
-export const EditTaskDialog = ({ task, projectId, open, onOpenChange, onTaskUpdated }) => {
+const TASK_TYPES = [
+  { value: 'PERSONAL', label: 'Personal' },
+  { value: 'ASSIGNMENT', label: 'Assignment' },
+  { value: 'EXAM', label: 'Exam' },
+  { value: 'READING', label: 'Reading' },
+  { value: 'LAB_REPORT', label: 'Lab Report' },
+];
+
+const TASK_PRIORITIES = [
+  { value: 'LOW', label: 'Low' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HIGH', label: 'High' },
+];
+
+export const EditTaskDialog = ({ task, open, onOpenChange, onTaskUpdated }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     dueDate: '',
   });
+  const [courseId, setCourseId] = useState('none');
+  const [type, setType] = useState('PERSONAL');
+  const [priority, setPriority] = useState('MEDIUM');
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,10 +40,21 @@ export const EditTaskDialog = ({ task, projectId, open, onOpenChange, onTaskUpda
       setFormData({
         title: task.title,
         description: task.description || '',
-        dueDate: task.dueDate,
+        dueDate: task.dueDate || '',
       });
+      setCourseId(task.courseId ? String(task.courseId) : 'none');
+      setType(task.type || 'PERSONAL');
+      setPriority(task.priority || 'MEDIUM');
     }
   }, [task]);
+
+  useEffect(() => {
+    if (open) {
+      courseService.getAllCourses({ size: 100 }).then((result) => {
+        setCourses(result.content || []);
+      });
+    }
+  }, [open]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,7 +66,13 @@ export const EditTaskDialog = ({ task, projectId, open, onOpenChange, onTaskUpda
     setLoading(true);
 
     try {
-      const updatedTask = await taskService.updateTask(projectId, task.id, formData);
+      const updatedTask = await taskService.updateTask(task.id, {
+        ...formData,
+        dueDate: formData.dueDate || null,
+        courseId: courseId !== 'none' ? Number(courseId) : null,
+        type,
+        priority,
+      });
       onTaskUpdated(updatedTask);
       onOpenChange(false);
     } catch (err) {
@@ -52,7 +89,7 @@ export const EditTaskDialog = ({ task, projectId, open, onOpenChange, onTaskUpda
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] font-mono">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
@@ -61,9 +98,9 @@ export const EditTaskDialog = ({ task, projectId, open, onOpenChange, onTaskUpda
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4 font-mono">
+          <div className="space-y-4 py-4">
             {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -93,14 +130,60 @@ export const EditTaskDialog = ({ task, projectId, open, onOpenChange, onTaskUpda
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date *</Label>
+              <Label>Course</Label>
+              <Select value={courseId} onValueChange={setCourseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="No course — personal task" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No course — personal task</SelectItem>
+                  {courses.map((course) => (
+                    <SelectItem key={course.id} value={String(course.id)}>
+                      {course.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={type} onValueChange={setType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TASK_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Priority</Label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TASK_PRIORITIES.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Due Date</Label>
               <Input
                 id="dueDate"
                 name="dueDate"
                 type="date"
                 value={formData.dueDate}
                 onChange={handleChange}
-                required
               />
             </div>
           </div>

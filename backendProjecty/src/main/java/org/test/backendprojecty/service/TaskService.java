@@ -2,8 +2,7 @@ package org.test.backendprojecty.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.test.backendprojecty.config.PaginationUtils;
@@ -11,19 +10,19 @@ import org.test.backendprojecty.dtos.request.PaginationRequest;
 import org.test.backendprojecty.dtos.request.TaskRequest;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.dtos.response.TaskResponse;
-import org.test.backendprojecty.entity.Project;
+import org.test.backendprojecty.entity.Course;
 import org.test.backendprojecty.entity.Task;
+import org.test.backendprojecty.entity.TaskPriority;
+import org.test.backendprojecty.entity.TaskType;
 import org.test.backendprojecty.entity.User;
 import org.test.backendprojecty.exception.BadRequestException;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
-import org.test.backendprojecty.exception.UnauthorizedException;
 import org.test.backendprojecty.mapper.TaskMapper;
-import org.test.backendprojecty.repository.ProjectRepository;
+import org.test.backendprojecty.repository.CourseRepository;
 import org.test.backendprojecty.repository.TaskRepository;
-import org.test.backendprojecty.repository.UserRepository;
-import org.test.backendprojecty.security.SecurityUser;
-import org.springframework.data.domain.Pageable;
+import org.test.backendprojecty.security.CurrentUserProvider;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,57 +31,51 @@ import java.util.stream.Collectors;
 public class TaskService {
 
     private final TaskRepository taskRepository;
-    private final ProjectRepository projectRepository;
-    private final UserRepository userRepository;
+    private final CourseRepository courseRepository;
     private final TaskMapper taskMapper;
+    private final CurrentUserProvider currentUserProvider;
 
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
-        return userRepository.findById(securityUser.getUser().getId())
-                .orElseThrow(() -> new UnauthorizedException("User not found"));
+    private Course resolveCourse(Long courseId, User currentUser) {
+        if (courseId == null) {
+            return null;
+        }
+        return courseRepository.findByIdAndUserId(courseId, currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
     }
 
     @Transactional
-    public TaskResponse createTask(Long projectId, TaskRequest request) {
-        User currentUser = getCurrentUser();
-        Project project = projectRepository.findByIdAndUserId(projectId, currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
+    public TaskResponse createTask(TaskRequest request) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        Course course = resolveCourse(request.getCourseId(), currentUser);
+
+        if (taskRepository.existsByTitleAndUserId(request.getTitle(), currentUser.getId())) {
+            throw new BadRequestException("Task title already exists");
+        }
 
         Task task = Task.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .dueDate(request.getDueDate())
                 .completed(false)
-                .project(project)
+                .type(request.getType() != null ? request.getType() : TaskType.PERSONAL)
+                .priority(request.getPriority() != null ? request.getPriority() : TaskPriority.MEDIUM)
+                .user(currentUser)
+                .course(course)
                 .build();
-
-        if (taskRepository.existsByTitleAndProject_Id(request.getTitle(),projectId)) {
-            throw new BadRequestException("Task title already exists");
-        }
 
         task = taskRepository.save(task);
         return taskMapper.toResponse(task);
     }
 
     @Transactional(readOnly = true)
-    public PagingResult<TaskResponse> getAllTasksByProject(
-            Long projectId,
-            PaginationRequest request
-    ) {
-        User currentUser = getCurrentUser();
-
-        projectRepository.findByIdAndUserId(projectId, currentUser.getId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Project not found with id: " + projectId
-                        )
-                );
+    public PagingResult<TaskResponse> getAllTasks(Long courseId, PaginationRequest request) {
+        User currentUser = currentUserProvider.getCurrentUser();
 
         Pageable pageable = PaginationUtils.getPageable(request);
 
-        Page<Task> taskPage =
-                taskRepository.findByProjectId(projectId, pageable);
+        Page<Task> taskPage = courseId != null
+                ? taskRepository.findByUserIdAndCourseId(currentUser.getId(), courseId, pageable)
+                : taskRepository.findByUserId(currentUser.getId(), pageable);
 
         List<TaskResponse> content = taskPage.getContent()
                 .stream()
@@ -99,61 +92,51 @@ public class TaskService {
         );
     }
 
-
     @Transactional(readOnly = true)
-    public TaskResponse getTaskById(Long projectId, Long taskId) {
-        User currentUser = getCurrentUser();
-        projectRepository.findByIdAndUserId(projectId, currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
-
-        Task task = taskRepository.findByIdAndProjectId(taskId, projectId)
+    public TaskResponse getTaskById(Long taskId) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        Task task = taskRepository.findByIdAndUserId(taskId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
 
         return taskMapper.toResponse(task);
     }
 
     @Transactional
-    public TaskResponse updateTask(Long projectId, Long taskId, TaskRequest request) {
-        User currentUser = getCurrentUser();
-        projectRepository.findByIdAndUserId(projectId, currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
-
-        Task task = taskRepository.findByIdAndProjectId(taskId, projectId)
+    public TaskResponse updateTask(Long taskId, TaskRequest request) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        Task task = taskRepository.findByIdAndUserId(taskId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
+
+        Course course = resolveCourse(request.getCourseId(), currentUser);
 
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
         task.setDueDate(request.getDueDate());
+        task.setCourse(course);
+        task.setType(request.getType() != null ? request.getType() : TaskType.PERSONAL);
+        task.setPriority(request.getPriority() != null ? request.getPriority() : TaskPriority.MEDIUM);
 
         task = taskRepository.save(task);
         return taskMapper.toResponse(task);
     }
 
     @Transactional
-    public TaskResponse markTaskAsCompleted(Long projectId, Long taskId) {
-        User currentUser = getCurrentUser();
-        projectRepository.findByIdAndUserId(projectId, currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
-
-        Task task = taskRepository.findByIdAndProjectId(taskId, projectId)
+    public TaskResponse markTaskAsCompleted(Long taskId) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        Task task = taskRepository.findByIdAndUserId(taskId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
 
-        if (task.isCompleted()) {
-            task.setCompleted(false);
-        }else{
-            task.setCompleted(true);
-        }
+        boolean nowCompleted = !task.isCompleted();
+        task.setCompleted(nowCompleted);
+        task.setCompletedAt(nowCompleted ? LocalDateTime.now() : null);
         task = taskRepository.save(task);
         return taskMapper.toResponse(task);
     }
 
     @Transactional
-    public void deleteTask(Long projectId, Long taskId) {
-        User currentUser = getCurrentUser();
-        projectRepository.findByIdAndUserId(projectId, currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
-
-        Task task = taskRepository.findByIdAndProjectId(taskId, projectId)
+    public void deleteTask(Long taskId) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        Task task = taskRepository.findByIdAndUserId(taskId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
 
         taskRepository.delete(task);

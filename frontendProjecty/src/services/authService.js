@@ -26,6 +26,13 @@ export const authService = {
     localStorage.removeItem('user');
   },
 
+  updateStoredUser(partialUser) {
+    const current = authService.getCurrentUser() || {};
+    const merged = { ...current, ...partialUser };
+    localStorage.setItem('user', JSON.stringify(merged));
+    return merged;
+  },
+
   getCurrentUser() {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;

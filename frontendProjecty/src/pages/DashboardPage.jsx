@@ -1,342 +1,209 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search, Filter} from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import Navbar from '../components/shared/Navbar';
-import ProjectCard from '../components/projects/ProjectCard';
-import CreateProjectDialog from '../components/projects/CreateProjectDialog';
-import projectService from '../services/projectService';
-import { StatCard } from '../components/shared/StatCard';
-import {Toaster} from '../components/ui/toaster';
+import { useState, useEffect, useMemo } from 'react';
+import { Home, ListTodo, GraduationCap, BookOpen, Bell, StickyNote, BarChart3 } from 'lucide-react';
+import taskService from '../services/taskService';
+import TaskList from '../components/tasks/TaskList';
+import CreateTaskDialog from '../components/tasks/CreateTaskDialog';
+import CreateNoteDialog from '../components/notes/CreateNoteDialog';
+import { Card, CardContent } from '../components/ui/card';
+import PageHero from '../components/shared/PageHero';
+import Callout from '../components/shared/Callout';
+import { todayStr, tomorrowStr, weekEndStr, monthEndStr, isOverdueTask, PRIORITY_ORDER } from '../lib/taskDates';
+
+const TABS = [
+  { key: 'today', label: 'Today' },
+  { key: 'tomorrow', label: 'Tomorrow' },
+  { key: 'week', label: 'This Week' },
+  { key: 'month', label: 'Month' },
+  { key: 'priority', label: 'By Priority' },
+];
+
+const EMPTY_MESSAGES = {
+  today: 'Nothing due today.',
+  tomorrow: 'Nothing due tomorrow.',
+  week: 'Nothing due this week.',
+  month: 'Nothing due this month.',
+  priority: 'No open tasks.',
+};
+
+const QUICK_ACTIONS = [
+  { key: 'task', label: 'Task', icon: ListTodo, type: 'PERSONAL' },
+  { key: 'exam', label: 'Exam', icon: GraduationCap, type: 'EXAM' },
+  { key: 'reading', label: 'Reading', icon: BookOpen, type: 'READING' },
+  { key: 'reminder', label: 'Reminder', icon: Bell, type: 'PERSONAL' },
+];
+
+const StatRow = ({ label, value, accent }) => (
+  <div className="flex items-center justify-between text-sm">
+    <span className="text-muted-foreground">{label}</span>
+    <span className={`font-numeric font-semibold ${accent || 'text-foreground'}`}>{value}</span>
+  </div>
+);
 
 export const DashboardPage = () => {
-  const [projects, setProjects] = useState([]);
-  const [projectsWithProgress, setProjectsWithProgress] = useState([]); // Nouveau state
-  const [filteredProjects, setFilteredProjects] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  
-  // Stats
-  const [stats, setStats] = useState({
-    totalProjects: 0,
-    completedProjects: 0,
-    totalTasks: 0,
-    completedTasks: 0,
-    overallProgress: 0,
-  });
+  const [activeTab, setActiveTab] = useState('today');
+  const [quickTaskType, setQuickTaskType] = useState(null);
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
 
-  // Filters
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-
-  // Pagination
-  const [page, setPage] = useState(1);
-  const [size] = useState(6);
-  const [totalPages, setTotalPages] = useState(0);
-
-  const fetchProjects = async (pageNumber = page) => {
+  const fetchTasks = async () => {
     setLoading(true);
     try {
-      const result = await projectService.getAllProjects({
-        page: pageNumber,
-        size,
-        sortField: 'id',
-        direction: 'DESC',
-      });
-
-      setProjects(result.content);
-      
-      // Fetch progress for each project
-      await fetchProjectsWithProgress(result.content);
-      
-      setTotalPages(result.totalPages);
-      setPage(result.page);
+      const result = await taskService.getAllTasks({ size: 500 });
+      setTasks(result.content);
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Error fetching tasks:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchProjectsWithProgress = async (projectsList) => {
-    const progressPromises = projectsList.map(async (project) => {
-      try {
-        const progress = await projectService.getProjectProgress(project.id);
-        return {
-          ...project,
-          progress: progress.progressPercentage,
-          totalTasks: progress.totalTasks,
-          completedTasks: progress.completedTasks,
-        };
-      } catch (error) {
-        console.error(`Error fetching progress for project ${project.id}:`, error);
-        return {
-          ...project,
-          progress: 0,
-          totalTasks: 0,
-          completedTasks: 0,
-        };
-      }
-    });
-
-    const projectsWithProgressData = await Promise.all(progressPromises);
-    setProjectsWithProgress(projectsWithProgressData);
-    
-    // Calculate stats
-    calculateStats(projectsWithProgressData);
-  };
-
-  const calculateStats = (projectsWithProgressData) => {
-    let totalProjects = projectsWithProgressData.length;
-    let completedProjects = 0;
-    let totalTasks = 0;
-    let completedTasks = 0;
-
-    projectsWithProgressData.forEach(project => {
-      totalTasks += project.totalTasks;
-      completedTasks += project.completedTasks;
-      
-      if (project.progress === 100) {
-        completedProjects++;
-      }
-    });
-
-    const overallProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-    const projectCompletionRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
-    const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-
-    setStats({
-      totalProjects,
-      completedProjects,
-      totalTasks,
-      completedTasks,
-      overallProgress: Math.round(overallProgress),
-      projectCompletionRate: Math.round(projectCompletionRate),
-      taskCompletionRate: Math.round(taskCompletionRate),
-    });
-  };
-
   useEffect(() => {
-    fetchProjects(page);
-  }, [page]);
+    fetchTasks();
+  }, []);
 
-  useEffect(() => {
-    let filtered = [...projectsWithProgress]; 
+  const stats = useMemo(() => {
+    const today = todayStr();
+    const weekEnd = weekEndStr();
+    return {
+      dueToday: tasks.filter((t) => !t.completed && t.dueDate === today).length,
+      dueThisWeek: tasks.filter((t) => !t.completed && t.dueDate && t.dueDate >= today && t.dueDate <= weekEnd).length,
+      overdue: tasks.filter(isOverdueTask).length,
+      inProgress: tasks.filter((t) => !t.completed).length,
+      completed: tasks.filter((t) => t.completed).length,
+    };
+  }, [tasks]);
 
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(project =>
-        project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  const tabTasks = useMemo(() => {
+    const today = todayStr();
+    const tomorrow = tomorrowStr();
+    const weekEnd = weekEndStr();
+    const monthEnd = monthEndStr();
+
+    switch (activeTab) {
+      case 'today':
+        return tasks.filter((t) => t.dueDate === today);
+      case 'tomorrow':
+        return tasks.filter((t) => t.dueDate === tomorrow);
+      case 'week':
+        return tasks.filter((t) => t.dueDate && t.dueDate >= today && t.dueDate <= weekEnd);
+      case 'month':
+        return tasks.filter((t) => t.dueDate && t.dueDate >= today && t.dueDate <= monthEnd);
+      case 'priority':
+        return [...tasks]
+          .filter((t) => !t.completed)
+          .sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
+      default:
+        return tasks;
     }
-
-    if (statusFilter === 'completed') {
-      filtered = filtered.filter(project => project.progress === 100);
-    } else if (statusFilter === 'in-progress') {
-      filtered = filtered.filter(project => project.progress < 100);
-    }
-
-    setFilteredProjects(filtered);
-  }, [searchTerm, statusFilter, projectsWithProgress]);
-
-  const handleProjectCreated = () => {
-    fetchProjects(page);
-    setIsCreateDialogOpen(false);
-  };
-
-  const handleProjectDeleted = () => {
-    fetchProjects(page);
-  };
-
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Loading projects...</div>
-        </div>
-      </>
-    );
-  }
+  }, [tasks, activeTab]);
 
   return (
-    <>
-      
-      <Navbar />
-      <div className="container mx-auto px-4 py-8 font-mono">
-        {/* Stats Cards with Circular Progress */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Overall Progress */}
-          <StatCard
-            title="Overall Progress"
-            subtitle={`${stats.completedTasks}/${stats.totalTasks} tasks done`}
-            percentage={stats.overallProgress}
-            color="blue"
-          />
+    <div className="accent-amber container mx-auto px-4 py-10">
+      <PageHero icon={Home} title="Dashboard" subtitle="Everything due, at a glance." />
 
-          {/* Total Projects */}
-          <StatCard
-            title="Total Projects"
-            subtitle={`${stats.completedProjects} completed`}
-            percentage={stats.projectCompletionRate || 0}
-            color="purple"
-          />
+      <div className="mb-6">
+        <Callout>
+          Tabs below are saved views over the same task list — switching them filters by due date or priority, it doesn't duplicate anything.
+        </Callout>
+      </div>
 
-          {/* Tasks Completed */}
-          <StatCard
-            title="Tasks Completed"
-            subtitle={`out of ${stats.totalTasks} total`}
-            percentage={stats.taskCompletionRate || 0}
-            color="green"
-          />
-
-          {/* Projects Achieved */}
-          <StatCard
-            title="Projects Achieved"
-            subtitle={`${stats.projectCompletionRate || 0}% completion rate`}
-            percentage={stats.projectCompletionRate || 0}
-            color="orange"
-          />
+      <div className="mb-8">
+        <p className="section-header mb-3">
+          <ListTodo className="h-4 w-4 text-primary" />
+          quick actions
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {QUICK_ACTIONS.map((action) => (
+            <button
+              key={action.key}
+              type="button"
+              onClick={() => setQuickTaskType(action.type)}
+              className="flex items-center gap-2 rounded-md border border-border/80 bg-card px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-accent"
+            >
+              <action.icon className="h-4 w-4 text-primary" />
+              {action.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setIsNoteOpen(true)}
+            className="flex items-center gap-2 rounded-md border border-border/80 bg-card px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-accent"
+          >
+            <StickyNote className="h-4 w-4 text-primary" />
+            Note
+          </button>
         </div>
+      </div>
 
-        {/* Header with Filters */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl text-blue-900 dark:text-blue-200 font-bold">
-                My Projects
-              </h1>
-              <p className="text-blue-400 mt-1 dark:text-gray-300">
-                Manage your projects and tasks
-              </p>
-            </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
-            </Button>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+        <div className="min-w-0">
+          <div className="mb-6 flex flex-wrap gap-1 rounded-lg border border-border/80 bg-card p-1">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === tab.key
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          {/* Filters Row */}
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search projects..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-16 animate-pulse rounded-xl border border-border/80 bg-card" />
+              ))}
             </div>
-
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Results count */}
-          {(searchTerm || statusFilter !== 'all') && (
-            <p className="text-sm text-muted-foreground mt-4">
-              Found {filteredProjects.length} project(s)
-              {statusFilter !== 'all' && ` • Filter: ${statusFilter === 'completed' ? 'Completed' : 'In Progress'}`}
-            </p>
+          ) : (
+            <TaskList
+              tasks={tabTasks}
+              onTaskUpdated={fetchTasks}
+              onTaskDeleted={fetchTasks}
+              emptyMessage={EMPTY_MESSAGES[activeTab]}
+            />
           )}
         </div>
 
-        {/* Content */}
-        {filteredProjects.length === 0 ? (
-          <div className="text-center py-12">
-            {searchTerm || statusFilter !== 'all' ? (
-              <>
-                <h3 className="text-lg font-semibold mb-2">No projects found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your search or filters
-                </p>
-                <div className="flex gap-2 justify-center">
-                  {searchTerm && (
-                    <Button variant="outline" onClick={() => setSearchTerm('')}>
-                      Clear Search
-                    </Button>
-                  )}
-                  {statusFilter !== 'all' && (
-                    <Button variant="outline" onClick={() => setStatusFilter('all')}>
-                      Clear Filter
-                    </Button>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Launch your project life-changing journey 🚀
-                </p>
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Project
-                </Button>
-              </>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Projects Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProjects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onDelete={handleProjectDeleted}
-                />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-10">
-                <Button
-                  variant="outline"
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  Previous
-                </Button>
-
-                <span className="text-sm text-muted-foreground dark:text-white">
-                  Page {page} of {totalPages}
-                </span>
-
-                <Button
-                  variant="outline"
-                  disabled={page === totalPages}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Create Project Dialog */}
-        <CreateProjectDialog
-          open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-          onProjectCreated={handleProjectCreated}
-        />
+        <div className="space-y-4">
+          <Card className="border-border/80 bg-card">
+            <CardContent className="space-y-3 p-5">
+              <p className="section-header">
+                <BarChart3 className="h-4 w-4 text-primary" />
+                stats
+              </p>
+              <StatRow label="Due Today" value={stats.dueToday} />
+              <StatRow label="Due This Week" value={stats.dueThisWeek} />
+              <StatRow label="Overdue" value={stats.overdue} accent="text-destructive" />
+              <StatRow label="In Progress" value={stats.inProgress} />
+              <StatRow label="Completed" value={stats.completed} accent="text-[hsl(var(--status-done-fg))]" />
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </>
+
+      <CreateTaskDialog
+        open={!!quickTaskType}
+        defaultType={quickTaskType}
+        onOpenChange={(open) => !open && setQuickTaskType(null)}
+        onTaskCreated={() => {
+          setQuickTaskType(null);
+          fetchTasks();
+        }}
+      />
+
+      <CreateNoteDialog
+        open={isNoteOpen}
+        onOpenChange={setIsNoteOpen}
+        onNoteCreated={() => setIsNoteOpen(false)}
+      />
+    </div>
   );
 };
 

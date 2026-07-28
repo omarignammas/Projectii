@@ -30,11 +30,18 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (partialUser) => {
+    const merged = authService.updateStoredUser(partialUser);
+    setUser(merged);
+    return merged;
+  };
+
   const value = {
     user,
     login,
     register,
     logout,
+    updateUser,
     isAuthenticated: !!user,
   };
 

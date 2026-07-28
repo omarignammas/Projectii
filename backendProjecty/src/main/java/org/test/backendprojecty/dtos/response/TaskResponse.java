@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.test.backendprojecty.entity.TaskPriority;
+import org.test.backendprojecty.entity.TaskType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,8 +20,11 @@ public class TaskResponse {
     private String description;
     private LocalDate dueDate;
     private boolean completed;
-    private Long projectId;
+    private LocalDateTime completedAt;
+    private Long courseId;
+    private String courseTitle;
+    private TaskType type;
+    private TaskPriority priority;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-

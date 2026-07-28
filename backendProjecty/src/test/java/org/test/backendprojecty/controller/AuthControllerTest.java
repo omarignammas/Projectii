@@ -1,24 +1,35 @@
 package org.test.backendprojecty.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.test.backendprojecty.dtos.request.LoginRequest;
 import org.test.backendprojecty.dtos.request.RegisterRequest;
 import org.test.backendprojecty.dtos.response.AuthResponse;
+import org.test.backendprojecty.security.JwtAuthenticationFilter;
 import org.test.backendprojecty.service.AuthService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(AuthController.class)
+@WebMvcTest(
+        controllers = AuthController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = JwtAuthenticationFilter.class
+        )
+)
 @AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
@@ -33,10 +44,9 @@ class AuthControllerTest {
 
     @Test
     void register_Success() throws Exception {
-        // Given
         RegisterRequest request = RegisterRequest.builder()
                 .email("test@example.com")
-                .password("password123")
+                .password("test123")
                 .firstName("John")
                 .lastName("Doe")
                 .build();
@@ -50,8 +60,8 @@ class AuthControllerTest {
 
         when(authService.register(any(RegisterRequest.class))).thenReturn(response);
 
-        // When & Then
         mockMvc.perform(post("/api/v1/auth/register")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -61,10 +71,9 @@ class AuthControllerTest {
 
     @Test
     void login_Success() throws Exception {
-        // Given
         LoginRequest request = LoginRequest.builder()
                 .email("test@example.com")
-                .password("password123")
+                .password("test123")
                 .build();
 
         AuthResponse response = AuthResponse.builder()
@@ -76,8 +85,8 @@ class AuthControllerTest {
 
         when(authService.login(any(LoginRequest.class))).thenReturn(response);
 
-        // When & Then
         mockMvc.perform(post("/api/v1/auth/login")
+                        .with(csrf())  // ADD THIS!
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -86,16 +95,15 @@ class AuthControllerTest {
 
     @Test
     void register_InvalidEmail_ReturnsBadRequest() throws Exception {
-        // Given
         RegisterRequest request = RegisterRequest.builder()
                 .email("invalid-email")
-                .password("password123")
+                .password("test123")
                 .firstName("John")
                 .lastName("Doe")
                 .build();
 
-        // When & Then
         mockMvc.perform(post("/api/v1/auth/register")
+                        .with(csrf())  // ADD THIS!
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());

@@ -3,19 +3,16 @@ import {CircularProgress} from '../shared/CircularProgress';
 
 export const StatCard = ({ title, subtitle, percentage, color }) => {
     return (
-      <Card className="overflow-hidden dark:bg-blue-900 hover:shadow-lg transition-shadow">
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center text-center space-y-4">
-  
-            {/* Circular Progress */}
-            <CircularProgress percentage={percentage} size={100} strokeWidth={8} color={color} />
-  
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium text-muted-foreground dark:text-blue-200">{title}</h3>
-              {subtitle && (
-                <p className="text-sm font-medium dark:text-white text-blue-500">{subtitle}</p>
-              )}
-            </div>
+      <Card className="border-border/80 bg-card transition-colors hover:border-border">
+        <CardContent className="flex flex-col items-center space-y-4 p-6 text-center">
+          {/* Circular Progress */}
+          <CircularProgress percentage={percentage} size={100} strokeWidth={8} color={color} />
+
+          <div className="space-y-1">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</h3>
+            {subtitle && (
+              <p className="text-sm font-medium text-foreground">{subtitle}</p>
+            )}
           </div>
         </CardContent>
       </Card>

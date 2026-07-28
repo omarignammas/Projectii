@@ -50,23 +50,23 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         registerRequest = RegisterRequest.builder()
-                .email("ignammas@example.com")
-                .password("password123")
-                .firstName("hamza")
-                .lastName("ignammas")
+                .email("test@example.com")
+                .password("test123")
+                .firstName("John")
+                .lastName("Doe")
                 .build();
 
         loginRequest = LoginRequest.builder()
-                .email("ignammas@example.com")
-                .password("password123")
+                .email("test@example.com")
+                .password("test123")
                 .build();
 
         user = User.builder()
                 .id(1L)
-                .email("ignammas@example.com")
+                .email("test@example.com")
                 .password("encodedPassword")
-                .firstName("hamza")
-                .lastName("ignammas")
+                .firstName("John")
+                .lastName("Doe")
                 .role(Role.USER)
                 .enabled(true)
                 .build();
@@ -86,8 +86,8 @@ class AuthServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
-        assertEquals("ignammas@example.com", response.getEmail());
-        assertEquals("hamza", response.getFirstName());
+        assertEquals("test@example.com", response.getEmail());
+        assertEquals("John", response.getFirstName());
         verify(userRepository).save(any(User.class));
     }
 

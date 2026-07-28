@@ -45,9 +45,11 @@ public class User {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    private String avatarUrl;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Project> projects = new ArrayList<>();
+    private List<Course> courses = new ArrayList<>();
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

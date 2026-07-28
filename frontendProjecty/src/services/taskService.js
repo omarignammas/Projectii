@@ -1,45 +1,47 @@
 import api from './api';
 
 export const taskService = {
-  async getAllTasks(projectId, {
+  async getAllTasks({
+    courseId,
     page = 1,
     size = 10,
     sortField = 'id',
     direction = 'ASC',
   } = {}) {
-    const response = await api.get(`/projects/${projectId}/tasks`, {
+    const response = await api.get('/tasks', {
       params: {
+        courseId,
         page,
         size,
         sortField,
         direction,
       },
     });
-    return response.data; 
-  },
-  
-  async getTaskById(projectId, taskId) {
-    const response = await api.get(`/projects/${projectId}/tasks/${taskId}`);
     return response.data;
   },
 
-  async createTask(projectId, taskData) {
-    const response = await api.post(`/projects/${projectId}/tasks`, taskData);
+  async getTaskById(taskId) {
+    const response = await api.get(`/tasks/${taskId}`);
     return response.data;
   },
 
-  async updateTask(projectId, taskId, taskData) {
-    const response = await api.put(`/projects/${projectId}/tasks/${taskId}`, taskData);
+  async createTask(taskData) {
+    const response = await api.post('/tasks', taskData);
     return response.data;
   },
 
-  async markTaskCompleted(projectId, taskId) {
-    const response = await api.put(`/projects/${projectId}/tasks/${taskId}/complete`);
+  async updateTask(taskId, taskData) {
+    const response = await api.put(`/tasks/${taskId}`, taskData);
     return response.data;
   },
 
-  async deleteTask(projectId, taskId) {
-    await api.delete(`/projects/${projectId}/tasks/${taskId}`);
+  async markTaskCompleted(taskId) {
+    const response = await api.put(`/tasks/${taskId}/complete`);
+    return response.data;
+  },
+
+  async deleteTask(taskId) {
+    await api.delete(`/tasks/${taskId}`);
   },
 };
 

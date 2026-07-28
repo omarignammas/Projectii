@@ -1,343 +1,223 @@
-# 🗂️ Project Management App
+# Projectii
 
-  
-  <p>
-    <strong>A comprehensive full-stack application for managing projects and tasks efficiently</strong>
-  </p>
-  
-  <p>
-    <img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React" />
-    <img src="https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
-    <img src="https://img.shields.io/badge/PostgreSQL-12+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-    <img src="https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-  </p>
+**A full-stack coursework workspace** — courses, tasks, a calendar, and synchronized Pomodoro Focus Rooms with friends, all in one place.
 
-</div>
+Started as a generic project/task manager and evolved into a student-focused study tool: track courses and assignments, run Kanban boards per term, hold live co-working sessions with friends over WebSockets, and see it all summarized with real-time stats.
 
-<br>
+[![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)](#)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.0-6DB33F?logo=springboot&logoColor=white)](#)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](#)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](#)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
-## 🎯 Overview
+## Screenshots
 
 <table>
-<tr>
-<td width="50%">
-
-### 🎨 Frontend
-- **Framework:** React + Vite
-- **UI Library:** shadcn/ui + Tailwind CSS
-- **Routing:** React Router DOM
-- **HTTP Client:** Axios
-- **State Management:** Context API
-
-</td>
-<td width="50%">
-
-### ⚙️ Backend
-- **Framework:** Spring Boot 3.2
-- **Authentication:** JWT (BCrypt)
-- **ORM:** Spring Data JPA
-- **Database:** PostgreSQL 12+
-- **Testing:** JUnit 5 + Mockito (70%+ coverage)
-
-</td>
-</tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/dashboard.png" alt="Dashboard"/><p align="center"><sub>Dashboard — everything due, at a glance</sub></p></td>
+    <td width="50%"><img src="docs/screenshots/tasks-kanban.png" alt="Kanban board"/><p align="center"><sub>Tasks — drag-and-drop Kanban board</sub></p></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/courses.png" alt="Courses"/><p align="center"><sub>Courses — per-course progress rings</sub></p></td>
+    <td width="50%"><img src="docs/screenshots/calendar.png" alt="Calendar"/><p align="center"><sub>Calendar — every due date, one month at a time</sub></p></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/focus-room-live.png" alt="Live Focus Room session"/><p align="center"><sub>Focus Rooms — live synchronized Pomodoro + chat</sub></p></td>
+    <td width="50%"><img src="docs/screenshots/stats-rings.png" alt="Stats"/><p align="center"><sub>Stats — completion trends, focus hours, per-course rings</sub></p></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/friends.png" alt="Friends"/><p align="center"><sub>Friends — send/accept requests, invite into rooms</sub></p></td>
+    <td width="50%"></td>
+  </tr>
 </table>
 
----
-
-## ✨ Key Features
-
-<div align="center">
-
-| Feature | Description |
-|---------|-------------|
-| 🔐 **Secure Authentication** | JWT-based auth with BCrypt password hashing |
-| 📝 **Complete CRUD Operations** | Full Create, Read, Update, Delete for Projects & Tasks |
-| 📊 **Real-time Progress Tracking** | Dynamic progress bars and completion statistics |
-| 📱 **Responsive Design** | Optimized for Mobile, Tablet, and Desktop |
-| 🌓 **Dark Mode Support** | Seamless theme switching with Tailwind CSS |
-| 📄 **Advanced Pagination** | Frontend & Backend pagination for large datasets |
-| 🧪 **Comprehensive Testing** | 70%+ code coverage with JUnit & Mockito |
-| 🐳 **Fully Dockerized** | One-command deployment with Docker Compose |
-
-</div>
+The landing page also ships its own animated product tour (`components/landing/ScreensShowcase.jsx`) built from the same design tokens and components as the real app, auto-cycling through the screens above.
 
 ---
 
-## 🧰 Tech Stack
+## Tech Stack
 
-<div align="center">
-
-### Frontend Technologies
-<p>
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Frontend/react-original-wordmark.svg" alt="React" width="50" height="50" />
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Frontend/tailwindcss-icon.svg" alt="Tailwind" width="50" height="50" />
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Languages/javascript-original.svg" alt="JavaScript" width="50" height="50" />
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Languages/typescript-original.svg" alt="TypeScript" width="50" height="50" />
-</p>
-
-### Backend Technologies
-<p>
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Languages/java-original.svg" alt="Java" width="50" height="50" />
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Backend/springio-icon.svg" alt="Spring Boot" width="50" height="50" />
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Database/postgresql-original-wordmark.svg" alt="PostgreSQL" width="50" height="50" />
-</p>
-
-### DevOps & Tools
-<p>
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Devops/docker-original-wordmark.svg" alt="Docker" width="50" height="50" />
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Other/git-scm-icon.svg" alt="Git" width="50" height="50" />
-  <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Software/getpostman-icon.svg" alt="Postman" width="50" height="50" />
-</p>
-
-</div>
+| Layer | Technologies |
+| --- | --- |
+| **Frontend** | React 19, Vite 7, React Router 7, Tailwind CSS, shadcn/ui (Radix primitives), Axios, date-fns, hand-built SVG charts (no charting library), `@stomp/stompjs` |
+| **Backend** | Java 17, Spring Boot 3.2, Spring Web, Spring Data JPA (Hibernate), Spring Security, Spring Validation, Spring WebSocket (STOMP), Spring Boot Actuator |
+| **Auth** | JWT (`jjwt`) bearer tokens, BCrypt password hashing, stateless sessions |
+| **Real-time** | STOMP over WebSocket — one broker for synchronized Focus Room sessions (server-authoritative Pomodoro phases, chat, hand-raise) and one for push notifications |
+| **Database** | PostgreSQL 15 (H2 in-memory for the test profile) |
+| **Testing** | JUnit 5, Mockito, Spring Security Test, JaCoCo (line-coverage gate enforced per package in the Maven build) |
+| **DevOps** | Docker (multi-stage builds, non-root runtime user, health checks), Docker Compose, Render (backend), Netlify (frontend) |
+| **Other** | Jsoup (server-side article text extraction for Notes), Lombok |
 
 ---
 
+## Features
 
-## 🏗️ Project Architecture
+**Courses & Tasks**
+- Courses grouped by term, each with its own progress ring
+- Tasks with priority, type, due date, and course tagging
+- List view or a full drag-and-drop Kanban board (To Do / Overdue / Done, overdue computed from due date)
+- Calendar view of every due date across all courses
 
-The architecture is modular to ensure maintainability and scalability.
+**Focus Rooms**
+- Create a room with a shareable join code, or invite friends directly
+- Optionally schedule a room for later
+- Server-authoritative synchronized Pomodoro timer (work / break / long break phases) shared by every participant
+- Live in-room chat, locked to reactions during a focus block; hand-raise signal
+- Rematch a completed room to start a fresh session with the same group
 
-### 📂 Frontend Structure (React)
+**Friends & Notifications**
+- Send, accept, or decline friend requests
+- Real-time in-app notifications over a dedicated WebSocket connection (friend requests, room invites) with a bell dropdown and unread count
+
+**Notes**
+- Save a note directly, or paste an article URL and have its readable text fetched and stored server-side (Jsoup) so it's available inside the app, not just an outbound link
+
+**Stats & Profile**
+- Completion trends and daily focus-hours trend (last 14 days), per-course completion rings, priority breakdown
+- Editable profile with a real avatar upload (validated, stored on disk, served statically — no third-party storage dependency)
+- Full dark/light theme support
+
+---
+
+## Architecture
 
 ```text
-src/
-├── components/
-│   ├── ui/          # Base components (shadcn/ui)
-│   ├── layout/      # Navbar, Sidebar, Layout wrappers
-│   ├── projects/    # Project-specific components
-│   └── tasks/       # Task-specific components
-├── pages/           # Main pages (Dashboard, Login, ProjectDetails)
-├── services/        # Axios config and API calls
-├── context/         # Global state management (AuthContext)
-├── hooks/           # Custom Hooks (e.g., useAuth, useTheme)
-└── lib/             # Utilities (Date formatting, CSS classes)
-
+projectii/
+├── backendProjecty/        # Spring Boot 3.2 API (Java 17)
+│   ├── config/              # Security, CORS, WebSocket/STOMP, scheduling, static file serving
+│   ├── controller/          # REST + STOMP message-mapped controllers
+│   ├── dtos/                # Request/response DTOs
+│   ├── entity/               # JPA entities (User, Course, Term, Task, Note, FocusRoom, FriendRequest, Notification, ...)
+│   ├── mapper/               # Entity <-> DTO mapping
+│   ├── repository/           # Spring Data JPA repositories
+│   ├── security/             # JWT filter, STOMP auth interceptor, current-user resolution
+│   └── service/               # Business logic
+│
+├── frontendProjecty/        # React 19 + Vite SPA
+│   └── src/
+│       ├── components/       # UI, grouped by feature (tasks, courses, focus-rooms, notes, notifications, landing, ...)
+│       ├── pages/            # Route-level pages
+│       ├── hooks/            # useAuth, useFocusRoomSocket, useNotificationSocket, ...
+│       ├── services/         # Axios API clients, one per resource
+│       └── context/          # Auth context
+│
+├── docker-compose.yml        # Postgres + backend + frontend, for local all-in-one runs
+├── render.yaml                # Render Blueprint for the backend (Docker web service)
+└── netlify.toml                # Netlify build config for the frontend (SPA redirects)
 ```
 
-### 📂 Backend Structure (Spring Boot)
-
-```text
-com.project.management
-├── audit            # Automatic auditing (created_at, updated_at)
-├── config           # Security (SecurityConfig), CORS, Swagger
-├── controller       # Presentation layer (REST API)
-├── dtos             # Data Transfer Objects
-│   ├── request      # Input DTOs
-│   └── response     # Output DTOs
-├── entity           # JPA Entities (Project, Task, User)
-├── exception        # Global Error Handling (GlobalExceptionHandler)
-├── mapper           # Entity <-> DTO Mapping
-├── repository       # Spring Data JPA Interfaces
-├── security         # JWT Filters, UserDetailsServiceImpl
-└── service          # Business Logic
-
-```
+**Real-time design:** two independent STOMP connections rather than one shared client. Focus Rooms use a per-room connection where the server owns all state (phase timing, round count, chat) and broadcasts the full room snapshot on every change — the client never computes timer state itself beyond a local countdown display. Notifications use a second, session-wide connection subscribed to a per-user queue, so they arrive on any page, not just inside a room.
 
 ---
 
+## Getting Started
 
-## 📦 Installation & Setup
+### Option A — Docker Compose (recommended)
 
-<div align="center">
-
-### 🐳 Docker Setup (Recommended)
-
-</div>
-
-### 1️⃣ Clone the repository
 ```bash
-git clone https://github.com/yourusername/project-management-app.git
-cd project-management-app
-```
-
-### 2️⃣ Environment Configuration
-
-Create a `.env` file at the root:
-```env
-# Database Configuration
-POSTGRES_DB=projectydb
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=secure_password_here
-
-# JWT Configuration
-JWT_SECRET_KEY=your_secure_secret_key_here
-JWT_EXPIRATION=86400000
-
-# API URL (Frontend connection)
-VITE_API_URL=http://localhost:8080/api/v1
-```
-
-### 3️⃣ Start Services
-```bash
-# Build and start all containers
+git clone https://github.com/omarignammas/Projectii.git
+cd Projectii
+cp .env.example .env   # then fill in real values
 docker-compose up -d --build
-
-# Check services status
-docker-compose ps
-
-# View logs
-docker-compose logs -f backend
 ```
 
-<div align="center">
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8080
+- Postgres: localhost:5432 (persisted in the `postgres-data` volume)
 
-| Service | URL |
-|---------|-----|
-| 🎨 Frontend | http://localhost:3000 |
-| ⚙️ Backend API | http://localhost:8080 |
-| 🗄️ PostgreSQL | localhost:5432 |
+### Option B — Run manually
 
-</div>
+**Backend** (needs a local PostgreSQL database named in `application.properties`, or override via env vars — see below):
 
-### 4️⃣ Stop Services
 ```bash
-docker-compose down
+cd backendProjecty
+./mvnw spring-boot:run
 ```
 
----
+**Frontend:**
 
-<details>
-<summary><b>🚀 Local Setup (Without Docker)</b></summary>
-
-### Backend
 ```bash
-cd backend
-mvn clean install
-mvn spring-boot:run
-```
-
-> API accessible at: `http://localhost:8080`
-
-### Frontend
-```bash
-cd frontend
+cd frontendProjecty
 npm install
 npm run dev
 ```
 
-> Application accessible at: `http://localhost:3000`
+### Configuration
 
-</details>
+Everything is overridable via environment variables, with sensible local defaults baked in so the app runs out of the box without any `.env` file. See `.env.example` (Docker Compose) and `frontendProjecty/.env.example` (Vite):
 
----
-
-## 📡 API Endpoints
-
-<div align="center">
-
-**Global Prefix:** `/api/v1`
-
-</div>
-
-### 🔐 Authentication
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/auth/register` | Register a new user |
-| `POST` | `/auth/login` | Login and retrieve JWT Token |
-
-### 📁 Projects
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/projects` | List all projects (with pagination) |
-| `POST` | `/projects` | Create a new project |
-| `GET` | `/projects/:id` | Get project details |
-| `PUT` | `/projects/:id` | Update a project |
-| `DELETE` | `/projects/:id` | Delete a project |
-| `GET` | `/projects/:id/progress` | Get completion percentage |
-
-### ✅ Tasks
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/projects/:id/tasks` | List tasks for a project |
-| `POST` | `/projects/:id/tasks` | Create a task within a project |
-| `PATCH` | `/tasks/:id/complete` | Mark task as completed |
-| `DELETE` | `/tasks/:id` | Delete a task |
+| Variable | Used by | Default |
+| --- | --- | --- |
+| `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | Backend | Local Postgres on `localhost:5432` |
+| `JWT_SECRET_KEY` / `JWT_EXPIRATION` | Backend | A dev-only key checked into `application.properties` — **override this in any real deployment** |
+| `APP_CORS_ALLOWED_ORIGINS` | Backend | `http://localhost:3000` — comma-separated for multiple origins |
+| `APP_UPLOADS_DIR` | Backend | `uploads` (avatar storage location) |
+| `VITE_API_URL` | Frontend | `http://localhost:8080` |
 
 ---
 
-## 🗄️ Database Maintenance
+## Testing
 
-<details>
-<summary><b>Database Backup & Restore</b></summary>
+Backend: 120 JUnit 5 + Mockito tests (services and controllers), run with:
 
-**Backup Database:**
 ```bash
-docker exec projecty-postgres pg_dump -U admin projectydb > backup.sql
+cd backendProjecty
+./mvnw test
 ```
 
-**Restore Database:**
-```bash
-docker exec -i projecty-postgres psql -U admin projectydb < backup.sql
-```
+The Maven build fails if JaCoCo measures under 70% line coverage in any package (`jacoco-maven-plugin`, `check` goal) — a real, enforced gate, not just a report.
 
-</details>
+Frontend: ESLint (`npm run lint`) and a production build (`npm run build`) as a smoke check; no component test suite yet.
 
 ---
 
+## Deployment
 
+The backend deploys to **Render** as a Docker web service; the frontend deploys to **Netlify** as a static build. They're independent services that talk to each other over `VITE_API_URL` / `APP_CORS_ALLOWED_ORIGINS`.
 
-<!-- <div align="center">
+### Backend → Render
 
-### Dashboard
-<img src="https://via.placeholder.com/800x400/0077B5/FFFFFF?text=Dashboard+Screenshot" alt="Dashboard" width="80%" />
+1. Push this repo to GitHub (already done if you're reading this on GitHub).
+2. In Render: **New → Blueprint**, point it at this repo — it picks up [`render.yaml`](render.yaml) and creates the `projectii-backend` Docker web service.
+   - No blueprint? Create it manually instead: **New → Web Service**, runtime **Docker**, Dockerfile path `backendProjecty/Dockerfile`, Docker context `backendProjecty`.
+3. Create a Postgres instance (Render Postgres, or any managed Postgres — Neon and Supabase both work).
+4. Set these environment variables on the web service:
+   - `SPRING_DATASOURCE_URL` — `jdbc:postgresql://<host>:<port>/<database>`
+   - `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
+   - `JWT_SECRET_KEY` — the blueprint auto-generates one; set your own if deploying manually
+   - `APP_CORS_ALLOWED_ORIGINS` — your Netlify URL, e.g. `https://projectii.netlify.app`
+5. Health check path is `/actuator/health` (already wired into `render.yaml` and the Dockerfile's `HEALTHCHECK`).
 
-### Project Details
-<img src="https://via.placeholder.com/800x400/00D4FF/FFFFFF?text=Project+Details+Screenshot" alt="Project Details" width="80%" />
+> Render's free plan has no persistent disk, so uploaded avatars won't survive a restart/redeploy. Fine for a demo; for real persistence, mount a paid disk or move avatar storage to S3-compatible object storage.
 
-### Dark Mode
-<img src="https://via.placeholder.com/800x400/1a1a1a/FFFFFF?text=Dark+Mode+Screenshot" alt="Dark Mode" width="80%" />
+### Frontend → Netlify
 
-</div> -->
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. In Netlify: **Add new site → Import an existing project**, pick this repo — it picks up [`netlify.toml`](netlify.toml) (base directory `frontendProjecty`, build command `npm run build`, publish directory `dist`, SPA redirect to `index.html`).
+2. Site settings → Environment variables: set `VITE_API_URL` to the Render backend URL from above.
+3. Deploy. Once you have the Netlify URL, go back to Render and set `APP_CORS_ALLOWED_ORIGINS` to it (they reference each other, so the backend needs to be told about the frontend's final URL).
 
 ---
 
-## 📝 License
+## API Overview
 
-<div align="center">
+Global prefix: `/api/v1`. All routes except `/auth/**` and `GET /uploads/**` require a `Authorization: Bearer <token>` header.
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
-
-</div>
-
----
-
-## 👨‍💻 Author
-
-<div align="center">
-
-**Omar Ignammas**
-
-[![LinkedIn](https://img.shields.io/badge/-LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/omar-ignammas)
-[![GitHub](https://img.shields.io/badge/-GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/omarignammas)
-[![Portfolio](https://img.shields.io/badge/-Portfolio-FF5722?style=for-the-badge&logo=google-chrome&logoColor=white)](https://ignmas.me)
-
-</div>
+| Resource | Base path |
+| --- | --- |
+| Auth | `/auth` — register, login |
+| Users | `/users/me` — profile read/update, avatar upload |
+| Terms & Courses | `/terms`, `/courses` |
+| Tasks | `/tasks` |
+| Notes | `/notes` |
+| Focus Rooms | `/focus-rooms` — create, join, invite, rematch (live session runs over STOMP, not REST) |
+| Friends | `/friends`, `/friends/requests` |
+| Notifications | `/notifications` |
 
 ---
 
-<div align="center">
+## License
 
-### ⭐️ Star this repository if you find it helpful!
-
-<img src="https://raw.githubusercontent.com/Trilokia/Trilokia/379277808c61ef204768a61bbc5d25bc7798ccf1/bottom_header.svg" width="100%" />
-
-</div>
+MIT — see [LICENSE](LICENSE).

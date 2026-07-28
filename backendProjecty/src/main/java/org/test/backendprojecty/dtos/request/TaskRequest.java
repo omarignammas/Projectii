@@ -1,9 +1,10 @@
 package org.test.backendprojecty.dtos.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.test.backendprojecty.entity.TaskPriority;
+import org.test.backendprojecty.entity.TaskType;
 
 import java.time.LocalDate;
 
@@ -21,7 +22,11 @@ public class TaskRequest {
     @Size(max = 2000, message = "Description must not exceed 2000 characters")
     private String description;
 
-    @NotNull(message = "Due date is required")
     private LocalDate dueDate;
-}
 
+    private Long courseId;
+
+    private TaskType type;
+
+    private TaskPriority priority;
+}

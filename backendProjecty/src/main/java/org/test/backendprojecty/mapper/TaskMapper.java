@@ -14,7 +14,11 @@ public class TaskMapper {
                 .description(task.getDescription())
                 .dueDate(task.getDueDate())
                 .completed(task.isCompleted())
-                .projectId(task.getProject().getId())
+                .completedAt(task.getCompletedAt())
+                .courseId(task.getCourse() != null ? task.getCourse().getId() : null)
+                .courseTitle(task.getCourse() != null ? task.getCourse().getTitle() : null)
+                .type(task.getType())
+                .priority(task.getPriority())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();

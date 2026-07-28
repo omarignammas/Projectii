@@ -1,6 +1,5 @@
 package org.test.backendprojecty.service;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -51,6 +50,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 
@@ -73,6 +73,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 }
