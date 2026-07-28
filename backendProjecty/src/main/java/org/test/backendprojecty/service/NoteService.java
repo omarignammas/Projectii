@@ -40,7 +40,7 @@ public class NoteService {
         if (courseId == null) {
             return null;
         }
-        return courseRepository.findByIdAndUserId(courseId, currentUser.getId())
+        return courseRepository.findByIdAndUserIdAndDeletedFalse(courseId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
     }
 

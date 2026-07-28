@@ -68,7 +68,7 @@ public class CourseService {
         User currentUser = currentUserProvider.getCurrentUser();
 
         Pageable pageable = PaginationUtils.getPageable(request);
-        Page<Course> coursesPage = courseRepository.findByUserId(currentUser.getId(), pageable);
+        Page<Course> coursesPage = courseRepository.findByUserIdAndDeletedFalse(currentUser.getId(), pageable);
 
         List<CourseResponse> content = coursesPage.getContent()
                 .stream()
@@ -88,7 +88,7 @@ public class CourseService {
     @Transactional(readOnly = true)
     public CourseResponse getCourseById(Long courseId) {
         User currentUser = currentUserProvider.getCurrentUser();
-        Course course = courseRepository.findByIdAndUserId(courseId, currentUser.getId())
+        Course course = courseRepository.findByIdAndUserIdAndDeletedFalse(courseId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
         return courseMapper.toResponse(course);
     }
@@ -96,7 +96,7 @@ public class CourseService {
     @Transactional
     public CourseResponse updateCourse(Long courseId, CourseRequest request) {
         User currentUser = currentUserProvider.getCurrentUser();
-        Course course = courseRepository.findByIdAndUserId(courseId, currentUser.getId())
+        Course course = courseRepository.findByIdAndUserIdAndDeletedFalse(courseId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
 
         Term term = resolveTerm(request.getTermId(), currentUser);
@@ -115,16 +115,19 @@ public class CourseService {
     @Transactional
     public void deleteCourse(Long courseId) {
         User currentUser = currentUserProvider.getCurrentUser();
-        Course course = courseRepository.findByIdAndUserId(courseId, currentUser.getId())
+        Course course = courseRepository.findByIdAndUserIdAndDeletedFalse(courseId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
 
-        courseRepository.delete(course);
+        // Soft delete — a hard delete blocks on the FK from any note that still
+        // references this course, and would otherwise pull the rug out from under it.
+        course.setDeleted(true);
+        courseRepository.save(course);
     }
 
     @Transactional(readOnly = true)
     public CourseProgressResponse getCourseProgress(Long courseId) {
         User currentUser = currentUserProvider.getCurrentUser();
-        Course course = courseRepository.findByIdAndUserId(courseId, currentUser.getId())
+        Course course = courseRepository.findByIdAndUserIdAndDeletedFalse(courseId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
 
         long completedTasks = taskRepository.countByCourseIdAndCompleted(courseId, true);

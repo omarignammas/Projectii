@@ -42,6 +42,13 @@ public class Course {
 
     private String instructorEmail;
 
+    // Deleting a course soft-deletes it (row stays put) instead of a hard DELETE —
+    // tasks and notes that reference it keep resolving fine; it just drops out of
+    // the owner's course list.
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

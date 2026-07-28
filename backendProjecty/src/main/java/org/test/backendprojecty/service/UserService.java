@@ -59,6 +59,8 @@ public class UserService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .avatarUrl(user.getAvatarUrl())
+                .role(user.getRole())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 }

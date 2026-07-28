@@ -56,7 +56,7 @@ public class FocusRoomService {
 
         Course course = null;
         if (request.getCourseId() != null) {
-            course = courseRepository.findByIdAndUserId(request.getCourseId(), currentUser.getId())
+            course = courseRepository.findByIdAndUserIdAndDeletedFalse(request.getCourseId(), currentUser.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + request.getCourseId()));
         }
 

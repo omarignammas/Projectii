@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { LogOut, UserCircle, Settings, Menu } from 'lucide-react';
+import { LogOut, UserCircle, Settings, Menu, ShieldCheck } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { ModeToggle } from '../ui/mode-toggle';
 import {
@@ -96,6 +96,12 @@ export const AppShell = () => {
                   <Settings className="h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
+                {user.role === 'ADMIN' && (
+                  <DropdownMenuItem onClick={() => navigate('/admin')}>
+                    <ShieldCheck className="h-4 w-4" />
+                    Admin
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                   <LogOut className="h-4 w-4" />

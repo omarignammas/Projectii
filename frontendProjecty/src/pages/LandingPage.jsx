@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FolderKanban,
@@ -12,7 +13,8 @@ import {
   LayoutGrid,
   CalendarDays,
   BarChart3,
-  Github,
+  Menu,
+  X,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../hooks/useAuth';
@@ -86,12 +88,27 @@ const STEPS = [
 
 export const LandingPage = () => {
   const { user } = useAuth();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Nav */}
-      <nav className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-md">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
+      {/* Nav — flush with the page at the top, becomes a floating inset card once scrolled */}
+      <div className={`sticky top-0 z-40 transition-[padding] duration-300 ${isScrolled ? 'px-3 pt-3 sm:px-6' : 'px-0 pt-0'}`}>
+        <nav
+          className={`mx-auto flex items-center justify-between backdrop-blur-md transition-all duration-300 ${
+            isScrolled
+              ? 'max-w-5xl rounded-2xl border border-border/80 bg-background/95 px-4 py-3 shadow-lg shadow-black/10'
+              : 'max-w-none border-b border-border/80 bg-background/90 px-4 py-4 sm:px-6 md:px-10'
+          }`}
+        >
           <Link to="/" className="flex items-center gap-2 text-xl font-bold text-foreground">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <FolderKanban className="h-4 w-4" />
@@ -107,7 +124,7 @@ export const LandingPage = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 md:flex">
             <ModeToggle />
             {user ? (
               <Button asChild size="sm" variant="outline" className="border-primary/60">
@@ -127,8 +144,56 @@ export const LandingPage = () => {
               </>
             )}
           </div>
-        </div>
-      </nav>
+
+          <div className="flex items-center gap-1 md:hidden">
+            <ModeToggle />
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen((v) => !v)}
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+        </nav>
+
+        {isMobileMenuOpen && (
+          <div className="mx-auto mt-2 max-w-5xl animate-in fade-in slide-in-from-top-2 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-lg shadow-black/10 backdrop-blur-md duration-200 md:hidden">
+            <div className="flex flex-col gap-1">
+              {NAV_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-col gap-2 border-t border-border/60 pt-3">
+              {user ? (
+                <Button asChild size="sm" variant="outline" className="border-primary/60">
+                  <Link to="/courses" onClick={() => setIsMobileMenuOpen(false)}>
+                    Enter App
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline" className="border-primary/60">
+                    <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>Get Started</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Hero */}
       <section className="bg-grid relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
@@ -346,10 +411,8 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer — scoped to the dark palette (via the same `.dark` token-scoping
-          trick used for accent-* scopes) so this band stays dark regardless of
-          the site's light/dark toggle, like a fixed brand signature. */}
-      <footer className="dark relative flex min-h-[280px] flex-col overflow-hidden border-t border-border bg-background sm:min-h-[320px]">
+      {/* Footer */}
+      <footer className="relative flex min-h-[280px] flex-col overflow-hidden border-t border-border bg-background sm:min-h-[320px]">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 flex select-none items-center justify-center"
@@ -375,15 +438,10 @@ export const LandingPage = () => {
 
           <div className="flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
             <p>© {new Date().getFullYear()} Projectii. Built for students, not spreadsheets.</p>
-            <a
-              href="https://github.com/omarignammas/Projectii"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border/80 px-4 py-2 text-foreground transition-colors hover:border-foreground/40 hover:bg-accent"
-            >
-              <Github className="h-4 w-4" />
-              View source on GitHub
-            </a>
+            <div className="flex items-center gap-6">
+              <Link to="/terms" className="transition-colors hover:text-foreground">Terms of Use</Link>
+              <Link to="/privacy" className="transition-colors hover:text-foreground">Privacy Policy</Link>
+            </div>
           </div>
         </div>
       </footer>

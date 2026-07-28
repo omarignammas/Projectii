@@ -10,8 +10,8 @@ import java.util.Optional;
 
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
-    Optional<Course> findByIdAndUserId(Long id, Long userId);
-    Page<Course> findByUserId(Long userId, Pageable pageable);
-    Page<Course> findByUserIdAndTermId(Long userId, Long termId, Pageable pageable);
+    Optional<Course> findByIdAndUserIdAndDeletedFalse(Long id, Long userId);
+    Page<Course> findByUserIdAndDeletedFalse(Long userId, Pageable pageable);
+    Page<Course> findByUserIdAndTermIdAndDeletedFalse(Long userId, Long termId, Pageable pageable);
     boolean existsByTitleAndUserId(String title, Long userId);
 }

@@ -115,7 +115,7 @@ class TaskServiceTest {
 
     @Test
     void createTask_Success() {
-        when(courseRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(course));
+        when(courseRepository.findByIdAndUserIdAndDeletedFalse(1L, 1L)).thenReturn(Optional.of(course));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
         when(taskMapper.toResponse(task)).thenReturn(taskResponse);
 
@@ -148,7 +148,7 @@ class TaskServiceTest {
 
         assertNotNull(response);
         assertNull(response.getCourseId());
-        verify(courseRepository, never()).findByIdAndUserId(any(), any());
+        verify(courseRepository, never()).findByIdAndUserIdAndDeletedFalse(any(), any());
     }
 
     @Test

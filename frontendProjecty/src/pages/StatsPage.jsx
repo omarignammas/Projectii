@@ -8,6 +8,8 @@ import focusRoomService from '../services/focusRoomService';
 import { isOverdueTask } from '../lib/taskDates';
 import TrendAreaChart from '../components/charts/TrendAreaChart';
 import CategoryBarChart from '../components/charts/CategoryBarChart';
+import ActivityHeatmap from '../components/charts/ActivityHeatmap';
+import StreakBarChart from '../components/charts/StreakBarChart';
 import { CircularProgress } from '../components/shared/CircularProgress';
 import PageHero from '../components/shared/PageHero';
 import { useAuth } from '../hooks/useAuth';
@@ -154,6 +156,51 @@ export const StatsPage = () => {
     return days;
   }, [focusRooms, user?.email]);
 
+  const activityHeatmapData = useMemo(() => {
+    const countsByDay = {};
+    tasks.forEach((t) => {
+      if (t.completed && t.completedAt) {
+        const key = t.completedAt.slice(0, 10);
+        countsByDay[key] = (countsByDay[key] || 0) + 1;
+      }
+    });
+
+    const WEEKS = 12;
+    const today = new Date();
+    const todayDow = today.getDay();
+    const gridStart = subDays(today, todayDow + (WEEKS - 1) * 7);
+
+    const days = [];
+    for (let i = 0; i < WEEKS * 7; i++) {
+      const d = addDays(gridStart, i);
+      const key = format(d, 'yyyy-MM-dd');
+      days.push({ date: key, count: countsByDay[key] || 0, isFuture: d > today });
+    }
+    return days;
+  }, [tasks]);
+
+  const streakBarData = useMemo(() => {
+    const completedDaySet = new Set(
+      tasks.filter((t) => t.completed && t.completedAt).map((t) => t.completedAt.slice(0, 10))
+    );
+
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = subDays(new Date(), i);
+      const key = format(d, 'yyyy-MM-dd');
+      days.push({ date: key, active: completedDaySet.has(key), inCurrentStreak: false });
+    }
+
+    let cursorIdx = days.length - 1;
+    if (!days[cursorIdx].active) cursorIdx -= 1;
+    while (cursorIdx >= 0 && days[cursorIdx].active) {
+      days[cursorIdx].inCurrentStreak = true;
+      cursorIdx -= 1;
+    }
+
+    return days;
+  }, [tasks]);
+
   const courseCompletionRates = useMemo(() => {
     return courses
       .map((course, i) => {
@@ -218,6 +265,24 @@ export const StatsPage = () => {
               sub={stats.mostUsedCourseCount ? `${stats.mostUsedCourseCount} tasks` : undefined}
             />
             <StatTile icon={Timer} label="Focus time this week" value={formatMinutes(stats.focusRoomMinutesThisWeek)} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card className="border-border/80 bg-card">
+              <CardContent className="p-5">
+                <p className="section-header mb-1">task activity</p>
+                <p className="mb-3 text-xs text-muted-foreground">Every day you completed something, last 12 weeks.</p>
+                <ActivityHeatmap data={activityHeatmapData} />
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/80 bg-card">
+              <CardContent className="p-5">
+                <p className="section-header mb-1">streak</p>
+                <p className="mb-3 text-xs text-muted-foreground">Last 30 days — highlighted bars are your current streak.</p>
+                <StreakBarChart data={streakBarData} />
+              </CardContent>
+            </Card>
           </div>
 
           <Card className="border-border/80 bg-card">

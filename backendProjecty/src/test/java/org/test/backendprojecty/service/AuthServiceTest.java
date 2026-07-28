@@ -88,6 +88,7 @@ class AuthServiceTest {
         assertEquals("jwt-token", response.getToken());
         assertEquals("test@example.com", response.getEmail());
         assertEquals("John", response.getFirstName());
+        assertEquals(Role.USER, response.getRole());
         verify(userRepository).save(any(User.class));
     }
 

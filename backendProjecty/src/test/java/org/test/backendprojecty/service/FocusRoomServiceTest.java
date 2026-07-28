@@ -132,7 +132,7 @@ class FocusRoomServiceTest {
     @Test
     void createRoom_CourseNotOwned_ThrowsResourceNotFound() {
         when(currentUserProvider.getCurrentUser()).thenReturn(host);
-        when(courseRepository.findByIdAndUserId(99L, host.getId())).thenReturn(Optional.empty());
+        when(courseRepository.findByIdAndUserIdAndDeletedFalse(99L, host.getId())).thenReturn(Optional.empty());
 
         FocusRoomRequest request = FocusRoomRequest.builder()
                 .name("Room").courseId(99L)

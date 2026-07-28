@@ -1,10 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/routes/ProtectedRoute';
+import AdminRoute from './components/routes/AdminRoute';
 import AppShell from './components/layout/AppShell';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import TermsOfUsePage from './pages/TermsOfUsePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import DashboardPage from './pages/DashboardPage';
 import TasksPage from './pages/TasksPage';
 import CoursesPage from './pages/CoursesPage';
@@ -18,6 +21,7 @@ import StatsPage from './pages/StatsPage';
 import OverduePage from './pages/OverduePage';
 import SettingsPage from './pages/SettingsPage';
 import ProfilePage from './pages/ProfilePage';
+import AdminPage from './pages/AdminPage';
 import {ThemeProvider} from './components/theme/theme-provider';
 import './App.css'
 import { Toaster } from './components/ui/toaster';
@@ -34,6 +38,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/terms" element={<TermsOfUsePage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
           <Route
             element={
@@ -55,6 +61,7 @@ function App() {
             <Route path="/overdue" element={<OverduePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
           </Route>
         </Routes>
       </AuthProvider>

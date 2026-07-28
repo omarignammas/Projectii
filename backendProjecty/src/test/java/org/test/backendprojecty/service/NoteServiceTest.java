@@ -112,7 +112,7 @@ class NoteServiceTest {
         assertNotNull(response);
         assertEquals("Test Note", response.getTitle());
         verify(noteRepository).save(any(Note.class));
-        verify(courseRepository, never()).findByIdAndUserId(any(), any());
+        verify(courseRepository, never()).findByIdAndUserIdAndDeletedFalse(any(), any());
     }
 
     @Test

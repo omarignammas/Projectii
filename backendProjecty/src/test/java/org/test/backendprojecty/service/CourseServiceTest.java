@@ -126,7 +126,7 @@ class CourseServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Course> coursePage = new PageImpl<>(Arrays.asList(course), pageable, 1);
 
-        when(courseRepository.findByUserId(eq(1L), any(Pageable.class)))
+        when(courseRepository.findByUserIdAndDeletedFalse(eq(1L), any(Pageable.class)))
                 .thenReturn(coursePage);
         when(courseMapper.toResponse(course)).thenReturn(courseResponse);
 
@@ -138,12 +138,12 @@ class CourseServiceTest {
         assertEquals(1L, result.getTotalElements());
         assertEquals(1, result.getPage());
         assertEquals("Test Course", result.getContent().iterator().next().getTitle());
-        verify(courseRepository).findByUserId(eq(1L), any(Pageable.class));
+        verify(courseRepository).findByUserIdAndDeletedFalse(eq(1L), any(Pageable.class));
     }
 
     @Test
     void getCourseById_Success() {
-        when(courseRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(course));
+        when(courseRepository.findByIdAndUserIdAndDeletedFalse(1L, 1L)).thenReturn(Optional.of(course));
         when(courseMapper.toResponse(course)).thenReturn(courseResponse);
 
         CourseResponse response = courseService.getCourseById(1L);
@@ -154,23 +154,25 @@ class CourseServiceTest {
 
     @Test
     void getCourseById_NotFound_ThrowsException() {
-        when(courseRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.empty());
+        when(courseRepository.findByIdAndUserIdAndDeletedFalse(1L, 1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> courseService.getCourseById(1L));
     }
 
     @Test
-    void deleteCourse_Success() {
-        when(courseRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(course));
+    void deleteCourse_SoftDeletes_DoesNotHardDelete() {
+        when(courseRepository.findByIdAndUserIdAndDeletedFalse(1L, 1L)).thenReturn(Optional.of(course));
 
         courseService.deleteCourse(1L);
 
-        verify(courseRepository).delete(course);
+        assertTrue(course.isDeleted());
+        verify(courseRepository).save(course);
+        verify(courseRepository, never()).delete(any(Course.class));
     }
 
     @Test
     void getCourseProgress_Success() {
-        when(courseRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(course));
+        when(courseRepository.findByIdAndUserIdAndDeletedFalse(1L, 1L)).thenReturn(Optional.of(course));
         when(taskRepository.countByCourseIdAndCompleted(1L, true)).thenReturn(5L);
         when(taskRepository.countByCourseIdAndCompleted(1L, false)).thenReturn(5L);
 
