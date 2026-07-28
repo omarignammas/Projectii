@@ -33,7 +33,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="bg-grid relative flex min-h-screen items-center justify-center px-4">
+    <main className="bg-grid relative flex min-h-screen items-center justify-center px-4">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
       <Card className="relative w-full max-w-md border-border/80 bg-card shadow-xl">
         <CardHeader className="flex flex-col items-center space-y-1">
@@ -105,7 +105,7 @@ export const LoginPage = () => {
           </CardFooter>
         </form>
       </Card>
-    </div>
+    </main>
   );
 };
 

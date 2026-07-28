@@ -87,7 +87,7 @@ export const PrivacyPolicyPage = () => (
       </div>
     </nav>
 
-    <div className="container mx-auto max-w-3xl px-4 py-16">
+    <main className="container mx-auto max-w-3xl px-4 py-16">
       <p className="eyebrow-label mb-4 w-fit">[ legal ]</p>
       <h1 className="mb-2 text-4xl font-bold text-foreground">Privacy Policy</h1>
       <p className="mb-12 text-sm text-muted-foreground">Last updated: July 2026</p>
@@ -104,7 +104,7 @@ export const PrivacyPolicyPage = () => (
           </section>
         ))}
       </div>
-    </div>
+    </main>
   </div>
 );
 

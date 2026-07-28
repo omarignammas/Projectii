@@ -195,6 +195,7 @@ export const LandingPage = () => {
         )}
       </div>
 
+      <main>
       {/* Hero */}
       <section className="bg-grid relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -410,6 +411,7 @@ export const LandingPage = () => {
           </Reveal>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="relative flex min-h-[280px] flex-col overflow-hidden border-t border-border bg-background sm:min-h-[320px]">
