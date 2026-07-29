@@ -25,6 +25,9 @@ public class TaskResponse {
     private String courseTitle;
     private TaskType type;
     private TaskPriority priority;
+    private String youtubeVideoId;
+    private Integer position;
+    private Integer durationMinutes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

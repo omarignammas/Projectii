@@ -41,4 +41,30 @@ class GlobalExceptionHandlerTest {
         assertEquals(401, response.getBody().getStatus());
         assertEquals("This account has been disabled", response.getBody().getMessage());
     }
+
+    @Test
+    void handlePlaylistNotFound_ReturnsNotFound() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/api/v1/courses/import/youtube");
+
+        ResponseEntity<ErrorResponse> response = handler.handlePlaylistNotFound(
+                new PlaylistNotFoundException("Playlist not found or is private."), request);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals(404, response.getBody().getStatus());
+        assertEquals("Playlist not found or is private.", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleExternalApi_ReturnsBadGateway() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/api/v1/courses/import/youtube");
+
+        ResponseEntity<ErrorResponse> response = handler.handleExternalApi(
+                new ExternalApiException("YouTube import is not configured."), request);
+
+        assertEquals(HttpStatus.BAD_GATEWAY, response.getStatusCode());
+        assertEquals(502, response.getBody().getStatus());
+        assertEquals("YouTube import is not configured.", response.getBody().getMessage());
+    }
 }

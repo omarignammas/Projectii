@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Backpack, GraduationCap, User, Gauge } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Backpack, GraduationCap, User, Gauge, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { CircularProgress } from '../components/shared/CircularProgress';
 import { Card, CardContent } from '../components/ui/card';
@@ -9,8 +9,10 @@ import CreateTaskDialog from '../components/tasks/CreateTaskDialog';
 import EditCourseDialog from '../components/courses/EditCourseDialog';
 import courseService from '../services/courseService';
 import taskService from '../services/taskService';
+import youtubeService from '../services/youtubeService';
 import PageHero from '../components/shared/PageHero';
 import Callout from '../components/shared/Callout';
+import { useToast } from '../hooks/use-toast';
 
 export const CourseDetailPage = () => {
   const { courseId } = useParams();
@@ -23,6 +25,8 @@ export const CourseDetailPage = () => {
 
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isEditCourseOpen, setIsEditCourseOpen] = useState(false);
+  const [resyncing, setResyncing] = useState(false);
+  const { toast } = useToast();
 
   const fetchCourseData = async () => {
     setLoading(true);
@@ -55,6 +59,28 @@ export const CourseDetailPage = () => {
   const handleCourseUpdated = (updatedCourse) => {
     setCourse(updatedCourse);
     setIsEditCourseOpen(false);
+  };
+
+  const handleResync = async () => {
+    setResyncing(true);
+    try {
+      const response = await youtubeService.resyncPlaylist(courseId);
+      toast({
+        title: 'Playlist resynced',
+        description: `${response.tasksImported} new task${response.tasksImported === 1 ? '' : 's'} imported${
+          response.tasksSkipped ? `, ${response.tasksSkipped} already up to date` : ''
+        }`,
+      });
+      fetchCourseData();
+    } catch (error) {
+      toast({
+        title: 'Resync failed',
+        description: error.response?.data?.message || 'Failed to resync playlist.',
+        variant: 'destructive',
+      });
+    } finally {
+      setResyncing(false);
+    }
   };
 
   if (loading) {
@@ -96,9 +122,22 @@ export const CourseDetailPage = () => {
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">{course.title}</h1>
             <p className="mt-3 max-w-2xl text-muted-foreground">{course.description || 'No description'}</p>
           </div>
-          <Button variant="outline" size="icon" onClick={() => setIsEditCourseOpen(true)} className="shrink-0">
-            <Edit className="h-4 w-4" />
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            {course.youtubePlaylistId && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleResync}
+                disabled={resyncing}
+                title="Resync from YouTube"
+              >
+                <RefreshCw className={`h-4 w-4 ${resyncing ? 'animate-spin' : ''}`} />
+              </Button>
+            )}
+            <Button variant="outline" size="icon" onClick={() => setIsEditCourseOpen(true)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

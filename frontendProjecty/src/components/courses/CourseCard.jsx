@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Trash2, Calendar, User } from 'lucide-react'
+import { Trash2, Calendar, User, Youtube } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -83,8 +83,16 @@ export const CourseCard = ({ course, onDelete }) => {
   return (
     <Card
       onClick={handleCardClick}
-      className="group cursor-pointer border-border/80 bg-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
+      className="group cursor-pointer overflow-hidden border-border/80 bg-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
     >
+      {course.thumbnailUrl && (
+        <img
+          src={course.thumbnailUrl}
+          alt=""
+          className="aspect-video w-full object-cover"
+        />
+      )}
+
       {/* HEADER */}
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
@@ -98,6 +106,12 @@ export const CourseCard = ({ course, onDelete }) => {
             <CardTitle className="text-lg text-foreground transition-colors group-hover:text-primary">
               {course.title}
             </CardTitle>
+            {course.youtubePlaylistId && (
+              <Badge variant="outline" className="shrink-0 gap-1 border-destructive/30 bg-destructive/10 text-destructive">
+                <Youtube className="h-3 w-3" />
+                YouTube
+              </Badge>
+            )}
           </div>
 
           <AlertDialog open={open} onOpenChange={setOpen}>

@@ -64,6 +64,13 @@ public class Task {
     @JoinColumn(name = "course_id")
     private Course course;
 
+    // Set only for tasks created via YouTube playlist import.
+    private String youtubeVideoId;
+
+    private Integer position;
+
+    private Integer durationMinutes;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

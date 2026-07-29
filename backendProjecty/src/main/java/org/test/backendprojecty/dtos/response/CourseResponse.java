@@ -19,6 +19,8 @@ public class CourseResponse {
     private String colorTag;
     private String instructorName;
     private String instructorEmail;
+    private String youtubePlaylistId;
+    private String thumbnailUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

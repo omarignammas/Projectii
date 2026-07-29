@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
 import { Button } from '../ui/button';
@@ -190,6 +190,24 @@ export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
                   <Badge variant="outline" className="border-border text-muted-foreground">
                     {TYPE_LABELS[task.type]}
                   </Badge>
+                )}
+
+                {task.durationMinutes && (
+                  <Badge variant="outline" className="border-border text-muted-foreground">
+                    {task.durationMinutes} min
+                  </Badge>
+                )}
+
+                {task.youtubeVideoId && (
+                  <a
+                    href={`https://www.youtube.com/watch?v=${task.youtubeVideoId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Watch on YouTube
+                  </a>
                 )}
               </div>
             </div>

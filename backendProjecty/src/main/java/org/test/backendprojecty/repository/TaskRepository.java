@@ -28,4 +28,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<LocalDateTime> findCompletedTimestampsByUserId(@Param("userId") Long userId);
 
     List<Task> findByDueDateAndCompletedFalseAndReminderSentFalse(LocalDate dueDate);
+
+    @Query("select t.youtubeVideoId from Task t where t.course.id = :courseId and t.youtubeVideoId is not null")
+    List<String> findYoutubeVideoIdsByCourseId(@Param("courseId") Long courseId);
 }

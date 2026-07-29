@@ -19,6 +19,9 @@ public class TaskMapper {
                 .courseTitle(task.getCourse() != null ? task.getCourse().getTitle() : null)
                 .type(task.getType())
                 .priority(task.getPriority())
+                .youtubeVideoId(task.getYoutubeVideoId())
+                .position(task.getPosition())
+                .durationMinutes(task.getDurationMinutes())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();

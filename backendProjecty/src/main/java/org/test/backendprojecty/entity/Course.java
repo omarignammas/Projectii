@@ -42,6 +42,12 @@ public class Course {
 
     private String instructorEmail;
 
+    // Set only for courses created via YouTube playlist import — lets resync find
+    // the source playlist again and lets the UI show a "synced from YouTube" badge.
+    private String youtubePlaylistId;
+
+    private String thumbnailUrl;
+
     // Deleting a course soft-deletes it (row stays put) instead of a hard DELETE —
     // tasks and notes that reference it keep resolving fine; it just drops out of
     // the owner's course list.

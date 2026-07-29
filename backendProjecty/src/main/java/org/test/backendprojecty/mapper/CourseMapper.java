@@ -16,6 +16,8 @@ public class CourseMapper {
                 .colorTag(course.getColorTag())
                 .instructorName(course.getInstructorName())
                 .instructorEmail(course.getInstructorEmail())
+                .youtubePlaylistId(course.getYoutubePlaylistId())
+                .thumbnailUrl(course.getThumbnailUrl())
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .build();

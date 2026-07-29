@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { GraduationCap, Plus, Search, Filter} from 'lucide-react';
+import { GraduationCap, Plus, Search, Filter, Youtube } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import CourseCard from '../components/courses/CourseCard';
 import CreateCourseDialog from '../components/courses/CreateCourseDialog';
+import ImportYoutubePlaylistDialog from '../components/courses/ImportYoutubePlaylistDialog';
 import courseService from '../services/courseService';
 import termService from '../services/termService';
 import { StatCard } from '../components/shared/StatCard';
@@ -17,6 +18,7 @@ export const CoursesPage = () => {
   const [termFilter, setTermFilter] = useState('current');
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({
@@ -167,6 +169,7 @@ export const CoursesPage = () => {
     fetchTerms();
     fetchCourses(page);
     setIsCreateDialogOpen(false);
+    setIsImportDialogOpen(false);
   };
 
   const handleCourseDeleted = () => {
@@ -180,10 +183,16 @@ export const CoursesPage = () => {
         title="My Courses"
         subtitle="Manage your courses and tasks"
         action={
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Course
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+              <Youtube className="h-4 w-4 mr-2" />
+              Import YouTube Playlist
+            </Button>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Course
+            </Button>
+          </div>
         }
       />
 
@@ -370,6 +379,13 @@ export const CoursesPage = () => {
       <CreateCourseDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
+        onCourseCreated={handleCourseCreated}
+      />
+
+      {/* Import YouTube Playlist Dialog */}
+      <ImportYoutubePlaylistDialog
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
         onCourseCreated={handleCourseCreated}
       />
     </div>
