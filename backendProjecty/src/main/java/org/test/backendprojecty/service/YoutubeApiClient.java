@@ -41,6 +41,9 @@ public class YoutubeApiClient {
         this.restTemplate = restTemplate;
         this.apiKey = apiKey;
         this.baseUrl = baseUrl;
+        log.info("YouTube playlist import: {} (key length: {}), base URL: {}",
+                (apiKey == null || apiKey.isBlank()) ? "DISABLED — no key resolved" : "enabled",
+                apiKey == null ? 0 : apiKey.length(), baseUrl);
     }
 
     public record PlaylistMetadata(String playlistId, String title, String description, String thumbnailUrl) {}
