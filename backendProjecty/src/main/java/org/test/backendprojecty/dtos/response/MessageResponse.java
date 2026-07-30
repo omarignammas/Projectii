@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class MessageResponse {
     private Long id;
     private String senderName;
+    private String senderEmail;
     private String senderAvatarUrl;
     private FocusMessageType type;
     private String body;

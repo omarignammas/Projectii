@@ -1,6 +1,7 @@
 package org.test.backendprojecty.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -12,6 +13,7 @@ import org.test.backendprojecty.dtos.request.PaginationRequest;
 import org.test.backendprojecty.dtos.response.FocusRoomResponse;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.entity.*;
+import org.test.backendprojecty.event.FocusRoomCompletedEvent;
 import org.test.backendprojecty.exception.BadRequestException;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
 import org.test.backendprojecty.mapper.FocusRoomMapper;
@@ -49,6 +51,7 @@ public class FocusRoomService {
     private final FocusRoomSchedulerService focusRoomSchedulerService;
     private final FriendService friendService;
     private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public FocusRoomResponse createRoom(FocusRoomRequest request) {
@@ -74,6 +77,7 @@ public class FocusRoomService {
                 .locked(false)
                 .chatMode(request.getChatMode() != null ? request.getChatMode() : ChatMode.CLOSED_FOCUS)
                 .scheduledFor(request.getScheduledFor())
+                .aiReportEnabled(request.isAiReportEnabled())
                 .build();
         room = focusRoomRepository.save(room);
 
@@ -333,6 +337,7 @@ public class FocusRoomService {
         room.setStatus(FocusRoomStatus.COMPLETED);
         room.setPhaseEndsAt(null);
         focusRoomRepository.save(room);
+        eventPublisher.publishEvent(new FocusRoomCompletedEvent(room.getId()));
 
         focusRoomSchedulerService.cancelScheduledTask(room.getId());
         postSystemMessage(room, "Host ended the session early");
@@ -356,6 +361,24 @@ public class FocusRoomService {
 
         String suffix = room.getStatus() == FocusRoomStatus.ACTIVE ? " (Round " + room.getCurrentRound() + ")" : "";
         postSystemMessage(room, displayName(currentUser) + " quit" + suffix);
+
+        // Nobody left to keep the session going (or to ever start it) — without this,
+        // a solo host leaving instead of clicking "End Session" left the room stuck
+        // showing as "In progress" forever, never counted as a completed session.
+        List<FocusRoomParticipant> allParticipants = participantRepository.findByRoomIdOrderByCreatedAtAsc(room.getId());
+        boolean anyoneStillAround = allParticipants.stream().anyMatch(p ->
+                p.getStatus() == ParticipantStatus.JOINED
+                        || p.getStatus() == ParticipantStatus.FOCUSING
+                        || p.getStatus() == ParticipantStatus.ON_BREAK);
+
+        if (!anyoneStillAround && room.getStatus() != FocusRoomStatus.COMPLETED) {
+            room.setStatus(FocusRoomStatus.COMPLETED);
+            room.setPhaseEndsAt(null);
+            focusRoomRepository.save(room);
+            eventPublisher.publishEvent(new FocusRoomCompletedEvent(room.getId()));
+            focusRoomSchedulerService.cancelScheduledTask(room.getId());
+        }
+
         buildSnapshotAndBroadcast(room);
     }
 

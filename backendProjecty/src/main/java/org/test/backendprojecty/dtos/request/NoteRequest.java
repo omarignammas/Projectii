@@ -26,4 +26,6 @@ public class NoteRequest {
     private Long courseId;
 
     private Long taskId;
+
+    private String roomCode;
 }

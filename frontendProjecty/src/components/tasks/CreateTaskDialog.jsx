@@ -9,6 +9,7 @@ import {Popover,PopoverContent,PopoverTrigger} from '../ui/popover'
 import {Calendar} from '../ui/calendar'
 import taskService from '../../services/taskService';
 import courseService from '../../services/courseService';
+import courseMemberService from '../../services/courseMemberService';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -37,6 +38,8 @@ export const CreateTaskDialog = ({ defaultCourseId, defaultType, open, onOpenCha
   const [type, setType] = useState(defaultType || 'PERSONAL')
   const [priority, setPriority] = useState('MEDIUM')
   const [courses, setCourses] = useState([])
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [assigneeUserId, setAssigneeUserId] = useState('me');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,8 +50,22 @@ export const CreateTaskDialog = ({ defaultCourseId, defaultType, open, onOpenCha
       });
       setCourseId(defaultCourseId ? String(defaultCourseId) : 'none');
       setType(defaultType || 'PERSONAL');
+      setAssigneeUserId('me');
     }
   }, [open, defaultCourseId]);
+
+  const selectedCourse = courses.find((c) => String(c.id) === courseId);
+
+  useEffect(() => {
+    if (courseId !== 'none' && selectedCourse?.isOwner) {
+      courseMemberService.listMembers(courseId).then((result) => {
+        setTeamMembers(result.filter((m) => m.status === 'ACTIVE' && !m.isOwner));
+      });
+    } else {
+      setTeamMembers([]);
+      setAssigneeUserId('me');
+    }
+  }, [courseId, selectedCourse?.isOwner]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -66,6 +83,7 @@ export const CreateTaskDialog = ({ defaultCourseId, defaultType, open, onOpenCha
       courseId: courseId !== 'none' ? Number(courseId) : null,
       type,
       priority,
+      assigneeUserId: assigneeUserId !== 'me' ? Number(assigneeUserId) : null,
     }
 
     const newTask = await taskService.createTask(payload)
@@ -83,6 +101,7 @@ export const CreateTaskDialog = ({ defaultCourseId, defaultType, open, onOpenCha
     setDueDate(undefined);
     setType('PERSONAL');
     setPriority('MEDIUM');
+    setAssigneeUserId('me');
     setError('');
   };
 
@@ -149,6 +168,23 @@ export const CreateTaskDialog = ({ defaultCourseId, defaultType, open, onOpenCha
                 </SelectContent>
               </Select>
             </div>
+
+            {teamMembers.length > 0 && (
+              <div className="space-y-2">
+                <Label>Assign to</Label>
+                <Select value={assigneeUserId} onValueChange={setAssigneeUserId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="me">Myself</SelectItem>
+                    {teamMembers.map((m) => (
+                      <SelectItem key={m.userId} value={String(m.userId)}>{m.displayName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

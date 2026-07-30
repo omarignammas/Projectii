@@ -1,5 +1,6 @@
 package org.test.backendprojecty.dtos.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,9 @@ public class CourseResponse {
     private String instructorEmail;
     private String youtubePlaylistId;
     private String thumbnailUrl;
+    @JsonProperty("isOwner")
+    private boolean isOwner;
+    private String ownerName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

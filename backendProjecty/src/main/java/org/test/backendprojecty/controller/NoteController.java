@@ -12,6 +12,8 @@ import org.test.backendprojecty.dtos.response.NoteResponse;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.service.NoteService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("${BaseUrl}/notes")
 @RequiredArgsConstructor
@@ -41,6 +43,11 @@ public class NoteController {
     public ResponseEntity<NoteResponse> getNoteById(@PathVariable Long noteId) {
         NoteResponse response = noteService.getNoteById(noteId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/room/{roomCode}")
+    public ResponseEntity<List<NoteResponse>> getRoomNotes(@PathVariable String roomCode) {
+        return ResponseEntity.ok(noteService.getRoomNotes(roomCode));
     }
 
     @PutMapping("/{noteId}")

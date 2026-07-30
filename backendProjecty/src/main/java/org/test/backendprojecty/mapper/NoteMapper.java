@@ -10,6 +10,8 @@ public class NoteMapper {
     public NoteResponse toResponse(Note note) {
         return NoteResponse.builder()
                 .id(note.getId())
+                .userId(note.getUser().getId())
+                .userName(note.getUser().getFirstName() + " " + note.getUser().getLastName())
                 .title(note.getTitle())
                 .body(note.getBody())
                 .tags(note.getTags())
@@ -18,6 +20,7 @@ public class NoteMapper {
                 .courseTitle(note.getCourse() != null ? note.getCourse().getTitle() : null)
                 .taskId(note.getTask() != null ? note.getTask().getId() : null)
                 .taskTitle(note.getTask() != null ? note.getTask().getTitle() : null)
+                .roomCode(note.getRoom() != null ? note.getRoom().getCode() : null)
                 .createdAt(note.getCreatedAt())
                 .updatedAt(note.getUpdatedAt())
                 .build();

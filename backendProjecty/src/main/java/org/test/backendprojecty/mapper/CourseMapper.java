@@ -7,7 +7,7 @@ import org.test.backendprojecty.entity.Course;
 @Component
 public class CourseMapper {
 
-    public CourseResponse toResponse(Course course) {
+    public CourseResponse toResponse(Course course, Long viewerId) {
         return CourseResponse.builder()
                 .id(course.getId())
                 .title(course.getTitle())
@@ -18,6 +18,8 @@ public class CourseMapper {
                 .instructorEmail(course.getInstructorEmail())
                 .youtubePlaylistId(course.getYoutubePlaylistId())
                 .thumbnailUrl(course.getThumbnailUrl())
+                .isOwner(course.getUser().getId().equals(viewerId))
+                .ownerName(course.getUser().getFirstName() + " " + course.getUser().getLastName())
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .build();

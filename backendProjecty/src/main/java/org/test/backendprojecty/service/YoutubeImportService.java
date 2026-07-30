@@ -131,7 +131,7 @@ public class YoutubeImportService {
         taskRepository.saveAll(tasks);
 
         return YoutubeImportResponse.builder()
-                .course(courseMapper.toResponse(course))
+                .course(courseMapper.toResponse(course, currentUser.getId()))
                 .tasksImported(tasks.size())
                 .tasksSkipped(result.skippedCount())
                 .build();

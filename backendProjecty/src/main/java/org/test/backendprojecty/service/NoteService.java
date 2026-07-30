@@ -11,12 +11,16 @@ import org.test.backendprojecty.dtos.request.PaginationRequest;
 import org.test.backendprojecty.dtos.response.NoteResponse;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.entity.Course;
+import org.test.backendprojecty.entity.FocusRoom;
 import org.test.backendprojecty.entity.Note;
 import org.test.backendprojecty.entity.Task;
 import org.test.backendprojecty.entity.User;
+import org.test.backendprojecty.exception.BadRequestException;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
 import org.test.backendprojecty.mapper.NoteMapper;
 import org.test.backendprojecty.repository.CourseRepository;
+import org.test.backendprojecty.repository.FocusRoomParticipantRepository;
+import org.test.backendprojecty.repository.FocusRoomRepository;
 import org.test.backendprojecty.repository.NoteRepository;
 import org.test.backendprojecty.repository.TaskRepository;
 import org.test.backendprojecty.security.CurrentUserProvider;
@@ -32,6 +36,8 @@ public class NoteService {
     private final NoteRepository noteRepository;
     private final CourseRepository courseRepository;
     private final TaskRepository taskRepository;
+    private final FocusRoomRepository focusRoomRepository;
+    private final FocusRoomParticipantRepository focusRoomParticipantRepository;
     private final NoteMapper noteMapper;
     private final CurrentUserProvider currentUserProvider;
     private final ArticleFetchService articleFetchService;
@@ -52,6 +58,23 @@ public class NoteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
     }
 
+    // Unlike course/task links, a room isn't owner-scoped — any participant
+    // (past or present) in a shared session can attach a note to it.
+    private FocusRoom resolveRoom(String roomCode, User currentUser) {
+        if (roomCode == null || roomCode.isBlank()) {
+            return null;
+        }
+        FocusRoom room = focusRoomRepository.findByCode(roomCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Focus room not found with code: " + roomCode));
+        boolean isParticipant = focusRoomParticipantRepository
+                .findByRoomIdAndUserId(room.getId(), currentUser.getId())
+                .isPresent();
+        if (!isParticipant) {
+            throw new BadRequestException("You can only add notes to a Focus Room you've joined");
+        }
+        return room;
+    }
+
     @Transactional
     public NoteResponse createNote(NoteRequest request) {
         User currentUser = currentUserProvider.getCurrentUser();
@@ -68,6 +91,7 @@ public class NoteService {
                 .savedUrl(request.getSavedUrl())
                 .course(resolveCourse(request.getCourseId(), currentUser))
                 .task(resolveTask(request.getTaskId(), currentUser))
+                .room(resolveRoom(request.getRoomCode(), currentUser))
                 .user(currentUser)
                 .build();
 
@@ -129,5 +153,17 @@ public class NoteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Note not found with id: " + noteId));
 
         noteRepository.delete(note);
+    }
+
+    // Cross-participant, unlike every other Note read here — any current/past
+    // participant can see the whole session's shared notes feed, not just their own.
+    @Transactional(readOnly = true)
+    public List<NoteResponse> getRoomNotes(String roomCode) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        FocusRoom room = resolveRoom(roomCode, currentUser);
+        return noteRepository.findByRoomIdOrderByCreatedAtAsc(room.getId())
+                .stream()
+                .map(noteMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }

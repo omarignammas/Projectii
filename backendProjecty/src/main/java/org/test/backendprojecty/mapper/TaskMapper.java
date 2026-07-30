@@ -22,6 +22,8 @@ public class TaskMapper {
                 .youtubeVideoId(task.getYoutubeVideoId())
                 .position(task.getPosition())
                 .durationMinutes(task.getDurationMinutes())
+                .assigneeId(task.getUser().getId())
+                .assigneeName(task.getUser().getFirstName() + " " + task.getUser().getLastName())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();

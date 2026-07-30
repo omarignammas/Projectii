@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.test.backendprojecty.dtos.request.FocusRoomRequest;
 import org.test.backendprojecty.dtos.response.FocusRoomResponse;
@@ -54,6 +55,8 @@ class FocusRoomServiceTest {
     private FriendService friendService;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private FocusRoomService focusRoomService;
 
@@ -65,7 +68,7 @@ class FocusRoomServiceTest {
         focusRoomService = new FocusRoomService(
                 focusRoomRepository, participantRepository, messageRepository, courseRepository, userRepository,
                 focusRoomMapper, currentUserProvider, messagingTemplate, focusRoomSchedulerService,
-                friendService, notificationService
+                friendService, notificationService, eventPublisher
         );
 
         host = User.builder().id(1L).firstName("Host").lastName("User").email("host@example.com").build();
@@ -462,6 +465,52 @@ class FocusRoomServiceTest {
         when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.empty());
 
         assertThrows(BadRequestException.class, () -> focusRoomService.leaveRoom("ABC-123", guest));
+    }
+
+    @Test
+    void leaveRoom_LastActiveParticipantLeaves_CompletesRoom() {
+        FocusRoom room = lobbyRoom();
+        room.setStatus(FocusRoomStatus.ACTIVE);
+        FocusRoomParticipant guestParticipant = participant(room, guest, ParticipantStatus.FOCUSING);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.of(guestParticipant));
+        when(participantRepository.findByRoomIdOrderByCreatedAtAsc(10L)).thenReturn(List.of(guestParticipant));
+
+        focusRoomService.leaveRoom("ABC-123", guest);
+
+        assertEquals(FocusRoomStatus.COMPLETED, room.getStatus());
+        assertNull(room.getPhaseEndsAt());
+        verify(focusRoomSchedulerService).cancelScheduledTask(10L);
+    }
+
+    @Test
+    void leaveRoom_OtherParticipantsStillActive_RoomStaysActive() {
+        FocusRoom room = lobbyRoom();
+        room.setStatus(FocusRoomStatus.ACTIVE);
+        FocusRoomParticipant guestParticipant = participant(room, guest, ParticipantStatus.FOCUSING);
+        FocusRoomParticipant hostParticipant = participant(room, host, ParticipantStatus.FOCUSING);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.of(guestParticipant));
+        when(participantRepository.findByRoomIdOrderByCreatedAtAsc(10L))
+                .thenReturn(List.of(guestParticipant, hostParticipant));
+
+        focusRoomService.leaveRoom("ABC-123", guest);
+
+        assertEquals(FocusRoomStatus.ACTIVE, room.getStatus());
+        verify(focusRoomSchedulerService, never()).cancelScheduledTask(anyLong());
+    }
+
+    @Test
+    void leaveRoom_SoloHostLeavesFromLobby_CompletesRoom() {
+        FocusRoom room = lobbyRoom();
+        FocusRoomParticipant hostParticipant = participant(room, host, ParticipantStatus.JOINED);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, host.getId())).thenReturn(Optional.of(hostParticipant));
+        when(participantRepository.findByRoomIdOrderByCreatedAtAsc(10L)).thenReturn(List.of(hostParticipant));
+
+        focusRoomService.leaveRoom("ABC-123", host);
+
+        assertEquals(FocusRoomStatus.COMPLETED, room.getStatus());
     }
 
     @Test

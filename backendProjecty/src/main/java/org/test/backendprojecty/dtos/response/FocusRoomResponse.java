@@ -35,6 +35,7 @@ public class FocusRoomResponse {
     private boolean locked;
     private ChatMode chatMode;
     private Instant scheduledFor;
+    private boolean aiReportEnabled;
     private List<ParticipantResponse> participants;
     private List<MessageResponse> recentMessages;
     private LocalDateTime createdAt;

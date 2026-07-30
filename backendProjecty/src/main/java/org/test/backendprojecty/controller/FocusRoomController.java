@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.*;
 import org.test.backendprojecty.dtos.request.FocusRoomRequest;
 import org.test.backendprojecty.dtos.request.InviteToRoomRequest;
 import org.test.backendprojecty.dtos.request.PaginationRequest;
+import org.test.backendprojecty.dtos.response.FocusRoomReportResponse;
 import org.test.backendprojecty.dtos.response.FocusRoomResponse;
 import org.test.backendprojecty.dtos.response.PagingResult;
+import org.test.backendprojecty.service.FocusRoomReportService;
 import org.test.backendprojecty.service.FocusRoomService;
 
 @RestController
@@ -19,6 +21,7 @@ import org.test.backendprojecty.service.FocusRoomService;
 public class FocusRoomController {
 
     private final FocusRoomService focusRoomService;
+    private final FocusRoomReportService focusRoomReportService;
 
     @PostMapping
     public ResponseEntity<FocusRoomResponse> createRoom(@Valid @RequestBody FocusRoomRequest request) {
@@ -58,5 +61,10 @@ public class FocusRoomController {
             @Valid @RequestBody InviteToRoomRequest request
     ) {
         return ResponseEntity.ok(focusRoomService.inviteToRoom(code, request.getUserId()));
+    }
+
+    @GetMapping("/{code}/report")
+    public ResponseEntity<FocusRoomReportResponse> getReport(@PathVariable String code) {
+        return ResponseEntity.ok(focusRoomReportService.getReport(code));
     }
 }

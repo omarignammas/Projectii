@@ -31,4 +31,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("select t.youtubeVideoId from Task t where t.course.id = :courseId and t.youtubeVideoId is not null")
     List<String> findYoutubeVideoIdsByCourseId(@Param("courseId") Long courseId);
+
+    // Cross-assignee, unlike every other Task query here — the shared team task
+    // list needs every task in the course regardless of who it's assigned to.
+    Page<Task> findByCourseId(Long courseId, Pageable pageable);
+
+    long countByCourseIdAndUserIdAndCompleted(Long courseId, Long userId, boolean completed);
 }

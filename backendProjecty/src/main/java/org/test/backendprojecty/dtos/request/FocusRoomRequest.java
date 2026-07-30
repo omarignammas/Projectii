@@ -51,4 +51,8 @@ public class FocusRoomRequest {
 
     /** Optional — must all be friends of the host; each becomes an INVITED participant. */
     private List<Long> inviteUserIds;
+
+    /** Optional — whether to generate an AI recap of chat/notes when this session ends. */
+    @Builder.Default
+    private boolean aiReportEnabled = true;
 }

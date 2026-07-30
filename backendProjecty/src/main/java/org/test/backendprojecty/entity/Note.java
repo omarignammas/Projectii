@@ -38,6 +38,12 @@ public class Note {
     @JoinColumn(name = "task_id")
     private Task task;
 
+    // Set when a note is taken from inside a live Focus Room session — any
+    // participant may attach one, not just the room's host.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
+    private FocusRoom room;
+
     @Column(nullable = false)
     private String title;
 

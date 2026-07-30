@@ -28,6 +28,8 @@ public class TaskResponse {
     private String youtubeVideoId;
     private Integer position;
     private Integer durationMinutes;
+    private Long assigneeId;
+    private String assigneeName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

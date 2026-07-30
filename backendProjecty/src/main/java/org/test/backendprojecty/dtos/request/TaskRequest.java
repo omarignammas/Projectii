@@ -29,4 +29,8 @@ public class TaskRequest {
     private TaskType type;
 
     private TaskPriority priority;
+
+    /** Optional — only honored when the current user owns the task's course and
+     * the target is an ACTIVE member (or the owner) of it; otherwise ignored. */
+    private Long assigneeUserId;
 }

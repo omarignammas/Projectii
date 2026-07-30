@@ -40,13 +40,14 @@ public class AuthService {
                 .enabled(true)
                 .build();
 
-        userRepository.save(user);
+        user = userRepository.save(user);
 
         SecurityUser securityUser = new SecurityUser(user);
         String jwtToken = jwtService.generateToken(securityUser);
 
         return AuthResponse.builder()
                 .token(jwtToken)
+                .id(user.getId())
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
@@ -71,6 +72,7 @@ public class AuthService {
 
         return AuthResponse.builder()
                 .token(jwtToken)
+                .id(user.getId())
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())

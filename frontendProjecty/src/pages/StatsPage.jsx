@@ -39,16 +39,25 @@ const computeStreak = (completedDayStrings) => {
 
 const StatTile = (props) => {
   const Icon = props.icon;
+  const percentage = props.percentage ?? 100;
+  const color = props.color || 'blue';
   return (
     <Card className="border-border/80 bg-card">
-      <CardContent className="flex items-start gap-4 p-5">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="h-5 w-5" />
-        </span>
+      <CardContent className="flex flex-col items-center gap-3 p-5 text-center">
+        <CircularProgress percentage={percentage} size={84} strokeWidth={6} color={color}>
+          <div className="flex flex-col items-center gap-0.5 px-2">
+            <Icon className="h-4 w-4 shrink-0 text-primary" />
+            <span
+              className="line-clamp-1 max-w-[64px] font-numeric text-base font-bold text-foreground"
+              title={typeof props.value === 'string' ? props.value : undefined}
+            >
+              {props.value}
+            </span>
+          </div>
+        </CircularProgress>
         <div className="min-w-0">
-          <p className="font-numeric text-2xl font-bold text-foreground">{props.value}</p>
-          <p className="text-sm text-muted-foreground">{props.label}</p>
-          {props.sub && <p className="mt-1 text-xs text-muted-foreground">{props.sub}</p>}
+          <p className="text-sm font-medium text-foreground">{props.label}</p>
+          {props.sub && <p className="mt-0.5 text-xs text-muted-foreground">{props.sub}</p>}
         </div>
       </CardContent>
     </Card>
@@ -179,28 +188,6 @@ export const StatsPage = () => {
     return days;
   }, [tasks]);
 
-  const streakBarData = useMemo(() => {
-    const completedDaySet = new Set(
-      tasks.filter((t) => t.completed && t.completedAt).map((t) => t.completedAt.slice(0, 10))
-    );
-
-    const days = [];
-    for (let i = 29; i >= 0; i--) {
-      const d = subDays(new Date(), i);
-      const key = format(d, 'yyyy-MM-dd');
-      days.push({ date: key, active: completedDaySet.has(key), inCurrentStreak: false });
-    }
-
-    let cursorIdx = days.length - 1;
-    if (!days[cursorIdx].active) cursorIdx -= 1;
-    while (cursorIdx >= 0 && days[cursorIdx].active) {
-      days[cursorIdx].inCurrentStreak = true;
-      cursorIdx -= 1;
-    }
-
-    return days;
-  }, [tasks]);
-
   const courseCompletionRates = useMemo(() => {
     return courses
       .map((course, i) => {
@@ -218,6 +205,56 @@ export const StatsPage = () => {
       })
       .filter((c) => c.total > 0);
   }, [courses, tasks]);
+
+  const streakBarData = useMemo(() => {
+    const completedTasksByDay = {};
+    tasks.forEach((t) => {
+      if (t.completed && t.completedAt) {
+        const key = t.completedAt.slice(0, 10);
+        (completedTasksByDay[key] = completedTasksByDay[key] || []).push(t);
+      }
+    });
+
+    const minutesByDay = {};
+    focusRooms.forEach((room) => {
+      if (room.status !== 'COMPLETED') return;
+      const key = format(new Date(room.updatedAt), 'yyyy-MM-dd');
+      const me = room.participants.find((p) => p.email === user?.email);
+      if (me?.minutesFocused) {
+        minutesByDay[key] = (minutesByDay[key] || 0) + me.minutesFocused;
+      }
+    });
+
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = subDays(new Date(), i);
+      const key = format(d, 'yyyy-MM-dd');
+      const dayTasks = completedTasksByDay[key] || [];
+      const courseTitles = [...new Set(dayTasks.map((t) => t.courseTitle).filter(Boolean))];
+      const dayCourses = courseTitles.map((title) => {
+        const rate = courseCompletionRates.find((c) => c.label === title);
+        return { title, percentage: rate ? rate.percentage : 0 };
+      });
+
+      days.push({
+        date: key,
+        active: dayTasks.length > 0,
+        inCurrentStreak: false,
+        tasksCompleted: dayTasks.length,
+        hoursWorked: Math.round(((minutesByDay[key] || 0) / 60) * 10) / 10,
+        courses: dayCourses,
+      });
+    }
+
+    let cursorIdx = days.length - 1;
+    if (!days[cursorIdx].active) cursorIdx -= 1;
+    while (cursorIdx >= 0 && days[cursorIdx].active) {
+      days[cursorIdx].inCurrentStreak = true;
+      cursorIdx -= 1;
+    }
+
+    return days;
+  }, [tasks, focusRooms, user?.email, courseCompletionRates]);
 
   const tasksByPriority = useMemo(() => {
     const order = [
@@ -248,23 +285,49 @@ export const StatsPage = () => {
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatTile icon={ListTodo} label="Total tasks" value={stats.totalTasks} sub={`${stats.totalCompleted} completed`} />
-            <StatTile icon={LayoutGrid} label="Courses" value={courses.length} />
-            <StatTile icon={AlertTriangle} label="Overdue" value={stats.overdueCount} />
+            <StatTile
+              icon={ListTodo}
+              label="Total tasks"
+              value={stats.totalTasks}
+              sub={`${stats.totalCompleted} completed`}
+              percentage={stats.totalTasks > 0 ? Math.round((stats.totalCompleted / stats.totalTasks) * 100) : 0}
+              color="blue"
+            />
+            <StatTile icon={LayoutGrid} label="Courses" value={courses.length} color="purple" />
+            <StatTile
+              icon={AlertTriangle}
+              label="Overdue"
+              value={stats.overdueCount}
+              color={stats.overdueCount > 0 ? 'orange' : 'green'}
+            />
             <StatTile
               icon={CheckCircle2}
               label="Weekly completion rate"
               value={`${stats.weeklyCompletionRate}%`}
               sub={`${stats.completedThisWeekCount}/${stats.dueThisWeekCount} due this week`}
+              percentage={stats.weeklyCompletionRate}
+              color="green"
             />
-            <StatTile icon={Flame} label="Current streak" value={`${stats.streak} ${stats.streak === 1 ? 'day' : 'days'}`} />
+            <StatTile
+              icon={Flame}
+              label="Current streak"
+              value={`${stats.streak} ${stats.streak === 1 ? 'day' : 'days'}`}
+              percentage={Math.min(100, Math.round((stats.streak / 7) * 100))}
+              color="orange"
+            />
             <StatTile
               icon={Tag}
               label="Most-used course"
               value={stats.mostUsedCourse}
               sub={stats.mostUsedCourseCount ? `${stats.mostUsedCourseCount} tasks` : undefined}
+              color="blue"
             />
-            <StatTile icon={Timer} label="Focus time this week" value={formatMinutes(stats.focusRoomMinutesThisWeek)} />
+            <StatTile
+              icon={Timer}
+              label="Focus time this week"
+              value={formatMinutes(stats.focusRoomMinutesThisWeek)}
+              color="purple"
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

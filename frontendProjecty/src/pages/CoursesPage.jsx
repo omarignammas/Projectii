@@ -339,12 +339,17 @@ export const CoursesPage = () => {
         <>
           {/* Courses Grid */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredCourses.map((course) => (
-              <CourseCard
+            {filteredCourses.map((course, index) => (
+              <div
                 key={course.id}
-                course={course}
-                onDelete={handleCourseDeleted}
-              />
+                className="animate-in fade-in slide-in-from-bottom-3 duration-500"
+                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+              >
+                <CourseCard
+                  course={course}
+                  onDelete={handleCourseDeleted}
+                />
+              </div>
             ))}
           </div>
 

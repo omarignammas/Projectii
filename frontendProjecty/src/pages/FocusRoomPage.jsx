@@ -84,7 +84,7 @@ export const FocusRoomPage = () => {
   const isHost = room.participants.some((p) => p.email === user.email && p.host);
 
   return (
-    <div className="accent-teal container mx-auto px-4 py-10">
+    <div className="accent-teal container mx-auto flex h-full min-h-0 flex-col px-4 py-10">
       {room.status === 'LOBBY' && (
         <RoomLobby
           room={room}

@@ -17,4 +17,14 @@ public class RestTemplateConfig {
                 .setReadTimeout(Duration.ofSeconds(8))
                 .build();
     }
+
+    // LLM completions run far longer than a typical REST call — its own bean with
+    // a much longer read timeout, rather than stretching the shared one above.
+    @Bean
+    public RestTemplate llmRestTemplate(RestTemplateBuilder builder) {
+        return builder
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(45))
+                .build();
+    }
 }

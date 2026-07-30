@@ -37,6 +37,11 @@ export const focusRoomService = {
     const response = await api.post(`/focus-rooms/${code}/invite`, { userId });
     return response.data;
   },
+
+  async getSessionReport(code) {
+    const response = await api.get(`/focus-rooms/${code}/report`);
+    return response.data;
+  },
 };
 
 export default focusRoomService;

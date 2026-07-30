@@ -86,6 +86,7 @@ class AuthServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
+        assertEquals(1L, response.getId());
         assertEquals("test@example.com", response.getEmail());
         assertEquals("John", response.getFirstName());
         assertEquals(Role.USER, response.getRole());
@@ -114,6 +115,7 @@ class AuthServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
+        assertEquals(1L, response.getId());
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 }

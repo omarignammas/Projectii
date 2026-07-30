@@ -81,6 +81,13 @@ public class FocusRoom {
     /** Informational only — the host still starts the session manually, there's no auto-start job. */
     private Instant scheduledFor;
 
+    // Consent for sending this room's chat/notes to a third-party LLM once the
+    // session ends — real user content leaves the system, so this defaults on
+    // but is host-controlled at creation time.
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean aiReportEnabled = true;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

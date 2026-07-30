@@ -14,6 +14,7 @@ import {
 } from '../ui/alert-dialog';
 import ParticipantRow from './ParticipantRow';
 import ChatPanel from './ChatPanel';
+import SessionNotes from './SessionNotes';
 import { CircularProgress } from '../shared/CircularProgress';
 
 const PHASE_LABEL = {
@@ -31,6 +32,7 @@ const formatRemaining = (ms) => {
 
 export const LiveSession = ({ room, userEmail, sendEnd, sendLeave, sendHand, sendChat, sendChatMode }) => {
   const [remaining, setRemaining] = useState(0);
+  const [activeTab, setActiveTab] = useState('chat');
 
   useEffect(() => {
     if (!room.phaseEndsAt) return undefined;
@@ -51,16 +53,16 @@ export const LiveSession = ({ room, userEmail, sendEnd, sendLeave, sendHand, sen
   const ringPercentage = totalMs > 0 ? Math.max(0, Math.min(100, Math.round((remaining / totalMs) * 100))) : 0;
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]" style={{ minHeight: '480px' }}>
-      <div className="flex flex-col rounded-xl border border-border/80 bg-card">
-        <div className="border-b border-border/60 p-5">
+    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]" style={{ minHeight: '480px' }}>
+      <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border/80 bg-card">
+        <div className="shrink-0 border-b border-border/60 p-5">
           <p className="section-header">
             <span className={`h-2 w-2 rounded-full ${inFocusBlock ? 'bg-destructive' : 'bg-[hsl(var(--status-in-progress-fg))]'}`} />
             {PHASE_LABEL[room.currentPhase] || room.currentPhase} · Round {room.currentRound}/{room.totalRounds}
           </p>
         </div>
 
-        <div className="flex flex-1 flex-col items-center justify-center gap-1 p-8">
+        <div className="flex shrink-0 flex-col items-center justify-center gap-1 p-8">
           <CircularProgress percentage={ringPercentage} size={220} strokeWidth={12} color="blue">
             <div className="flex flex-col items-center">
               <p className="font-numeric text-4xl font-bold tabular-nums text-foreground">{formatRemaining(remaining)}</p>
@@ -69,7 +71,7 @@ export const LiveSession = ({ room, userEmail, sendEnd, sendLeave, sendHand, sen
           </CircularProgress>
         </div>
 
-        <div className="flex justify-center gap-3 border-t border-border/60 p-5">
+        <div className="flex shrink-0 justify-center gap-3 border-t border-border/60 p-5">
           <Button variant="outline" onClick={sendLeave}>
             <DoorOpen className="mr-2 h-4 w-4" />
             Leave
@@ -101,7 +103,7 @@ export const LiveSession = ({ room, userEmail, sendEnd, sendLeave, sendHand, sen
           )}
         </div>
 
-        <div className="border-t border-border/60 p-5">
+        <div className="thin-scrollbar min-h-0 flex-1 overflow-y-auto border-t border-border/60 p-5">
           <p className="section-header mb-2">participants ({room.participants.length})</p>
           <div className="divide-y divide-border/40">
             {room.participants.map((p) => (
@@ -111,16 +113,46 @@ export const LiveSession = ({ room, userEmail, sendEnd, sendLeave, sendHand, sen
         </div>
       </div>
 
-      <ChatPanel
-        messages={room.recentMessages}
-        inFocusBlock={inFocusBlock}
-        chatMode={room.chatMode}
-        isHost={isHost}
-        onChatModeChange={sendChatMode}
-        onSend={sendChat}
-        onRaiseHand={sendHand}
-        handRaised={me?.handRaised}
-      />
+      <div className="flex h-full min-h-0 flex-col gap-2">
+        <div className="flex shrink-0 gap-1 rounded-lg border border-border/80 bg-card p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab('chat')}
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === 'chat' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Chat
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('notes')}
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === 'notes' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Notes
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1">
+          {activeTab === 'chat' ? (
+            <ChatPanel
+              messages={room.recentMessages}
+              inFocusBlock={inFocusBlock}
+              chatMode={room.chatMode}
+              isHost={isHost}
+              currentUserEmail={userEmail}
+              onChatModeChange={sendChatMode}
+              onSend={sendChat}
+              onRaiseHand={sendHand}
+              handRaised={me?.handRaised}
+            />
+          ) : (
+            <SessionNotes roomCode={room.code} />
+          )}
+        </div>
+      </div>
     </div>
   );
 };

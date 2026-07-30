@@ -3,6 +3,7 @@ package org.test.backendprojecty.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,13 +17,18 @@ import org.test.backendprojecty.dtos.request.TaskRequest;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.dtos.response.TaskResponse;
 import org.test.backendprojecty.entity.Course;
+import org.test.backendprojecty.entity.CourseMember;
+import org.test.backendprojecty.entity.MemberStatus;
 import org.test.backendprojecty.entity.NotificationType;
 import org.test.backendprojecty.entity.Task;
 import org.test.backendprojecty.entity.User;
+import org.test.backendprojecty.exception.BadRequestException;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
 import org.test.backendprojecty.mapper.TaskMapper;
+import org.test.backendprojecty.repository.CourseMemberRepository;
 import org.test.backendprojecty.repository.CourseRepository;
 import org.test.backendprojecty.repository.TaskRepository;
+import org.test.backendprojecty.repository.UserRepository;
 import org.test.backendprojecty.security.CurrentUserProvider;
 
 import java.time.LocalDate;
@@ -44,6 +50,12 @@ class TaskServiceTest {
 
     @Mock
     private CourseRepository courseRepository;
+
+    @Mock
+    private CourseMemberRepository courseMemberRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private TaskMapper taskMapper;
@@ -302,5 +314,69 @@ class TaskServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> taskService.getTaskById(1L));
+    }
+
+    @Test
+    void createTask_WithAssignee_OwnerAssignsToActiveMember_Success() {
+        User member = User.builder().id(2L).email("member@example.com").firstName("Mem").lastName("Ber").build();
+        TaskRequest requestWithAssignee = TaskRequest.builder()
+                .title("Team Task")
+                .courseId(1L)
+                .assigneeUserId(2L)
+                .build();
+        Task assignedTask = Task.builder().id(4L).title("Team Task").user(member).course(course).build();
+
+        when(courseRepository.findByIdAndUserIdAndDeletedFalse(1L, 1L)).thenReturn(Optional.of(course));
+        when(courseMemberRepository.findByCourseIdAndUserId(1L, 2L)).thenReturn(Optional.of(
+                CourseMember.builder().course(course).user(member).status(MemberStatus.ACTIVE).build()));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(member));
+        when(taskRepository.existsByTitleAndUserId("Team Task", 2L)).thenReturn(false);
+        when(taskRepository.save(any(Task.class))).thenReturn(assignedTask);
+        when(taskMapper.toResponse(assignedTask)).thenReturn(taskResponse);
+
+        taskService.createTask(requestWithAssignee);
+
+        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
+        verify(taskRepository).save(captor.capture());
+        assertEquals(member, captor.getValue().getUser());
+        verify(notificationService).notify(eq(member), eq(NotificationType.TASK_REMINDER),
+                anyString(), anyString(), eq("/courses/1"));
+    }
+
+    @Test
+    void createTask_WithAssignee_TargetNotActiveMember_ThrowsBadRequest() {
+        TaskRequest requestWithAssignee = TaskRequest.builder()
+                .title("Team Task")
+                .courseId(1L)
+                .assigneeUserId(2L)
+                .build();
+
+        when(courseRepository.findByIdAndUserIdAndDeletedFalse(1L, 1L)).thenReturn(Optional.of(course));
+        when(courseMemberRepository.findByCourseIdAndUserId(1L, 2L)).thenReturn(Optional.empty());
+
+        assertThrows(BadRequestException.class, () -> taskService.createTask(requestWithAssignee));
+        verify(taskRepository, never()).save(any());
+    }
+
+    @Test
+    void createTask_WithAssignee_NonOwnerCourse_FallsBackToCurrentUser() {
+        User otherOwner = User.builder().id(5L).email("other@example.com").build();
+        Course notOwnedByMe = Course.builder().id(9L).title("Not Mine").user(otherOwner).build();
+        TaskRequest requestWithAssignee = TaskRequest.builder()
+                .title("Solo Task")
+                .courseId(9L)
+                .assigneeUserId(2L)
+                .build();
+
+        when(courseRepository.findByIdAndUserIdAndDeletedFalse(9L, 1L)).thenReturn(Optional.of(notOwnedByMe));
+        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        when(taskMapper.toResponse(task)).thenReturn(taskResponse);
+
+        taskService.createTask(requestWithAssignee);
+
+        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
+        verify(taskRepository).save(captor.capture());
+        assertEquals(user, captor.getValue().getUser());
+        verifyNoInteractions(courseMemberRepository);
     }
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Edit, Trash2, ExternalLink } from 'lucide-react';
+import { Calendar, Edit, Trash2, ExternalLink, Users } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
 import { Button } from '../ui/button';
@@ -8,6 +8,7 @@ import EditTaskDialog from './EditTaskDialog';
 import taskService from '../../services/taskService';
 import { format } from 'date-fns';
 import { isOverdueTask, parseLocalDate } from '../../lib/taskDates';
+import { useAuth } from '../../hooks/useAuth';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,11 @@ const TYPE_LABELS = {
 export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const {toast} = useToast();
+  const { user } = useAuth();
+
+  // A shared-course task list shows every teammate's tasks — you can only
+  // check off / edit / delete the ones actually assigned to you.
+  const isMine = !task.assigneeId || task.assigneeId === user?.id;
 
   const handleToggleComplete = async () => {
     try {
@@ -86,27 +92,31 @@ export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
       >
         <CardContent className="p-3">
           <div className="flex items-start gap-3">
-              <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                      <Checkbox
-                          checked={task.completed}
-                          className="mt-1"
-                      />
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                      <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete your
-                              Task !
-                          </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleToggleComplete} className='bg-destructive hover:bg-destructive/90'>complete Task</AlertDialogAction>
-                      </AlertDialogFooter>
-                  </AlertDialogContent>
-              </AlertDialog>
+              {isMine ? (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Checkbox
+                            checked={task.completed}
+                            className="mt-1"
+                        />
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your
+                                Task !
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleToggleComplete} className='bg-destructive hover:bg-destructive/90'>complete Task</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Checkbox checked={task.completed} disabled className="mt-1" />
+              )}
 
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-3">
@@ -124,7 +134,7 @@ export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
                 </div>
 
                 <div className="flex items-center gap-1">
-                  {!task.completed && (
+                  {isMine && !task.completed && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -135,6 +145,7 @@ export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
                     </Button>
                   )}
 
+                      {isMine && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
@@ -159,6 +170,7 @@ export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      )}
                 </div>
               </div>
 
@@ -183,6 +195,13 @@ export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
                 {task.courseTitle && (
                   <Badge variant="outline" className="border-border text-muted-foreground">
                     {task.courseTitle}
+                  </Badge>
+                )}
+
+                {!isMine && task.assigneeName && (
+                  <Badge variant="outline" className="gap-1 border-primary/30 bg-primary/10 text-primary">
+                    <Users className="h-3 w-3" />
+                    {task.assigneeName}
                   </Badge>
                 )}
 

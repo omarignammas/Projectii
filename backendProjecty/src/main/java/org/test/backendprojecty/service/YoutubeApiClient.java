@@ -2,6 +2,7 @@ package org.test.backendprojecty.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -35,7 +36,7 @@ public class YoutubeApiClient {
     private final String apiKey;
     private final String baseUrl;
 
-    public YoutubeApiClient(RestTemplate restTemplate,
+    public YoutubeApiClient(@Qualifier("restTemplate") RestTemplate restTemplate,
                              @Value("${app.youtube.api-key}") String apiKey,
                              @Value("${app.youtube.base-url}") String baseUrl) {
         this.restTemplate = restTemplate;

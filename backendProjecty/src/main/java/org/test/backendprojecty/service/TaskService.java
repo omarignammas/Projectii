@@ -11,6 +11,7 @@ import org.test.backendprojecty.dtos.request.TaskRequest;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.dtos.response.TaskResponse;
 import org.test.backendprojecty.entity.Course;
+import org.test.backendprojecty.entity.MemberStatus;
 import org.test.backendprojecty.entity.NotificationType;
 import org.test.backendprojecty.entity.Task;
 import org.test.backendprojecty.entity.TaskPriority;
@@ -19,8 +20,10 @@ import org.test.backendprojecty.entity.User;
 import org.test.backendprojecty.exception.BadRequestException;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
 import org.test.backendprojecty.mapper.TaskMapper;
+import org.test.backendprojecty.repository.CourseMemberRepository;
 import org.test.backendprojecty.repository.CourseRepository;
 import org.test.backendprojecty.repository.TaskRepository;
+import org.test.backendprojecty.repository.UserRepository;
 import org.test.backendprojecty.security.CurrentUserProvider;
 
 import java.time.LocalDate;
@@ -37,6 +40,8 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final CourseRepository courseRepository;
+    private final CourseMemberRepository courseMemberRepository;
+    private final UserRepository userRepository;
     private final TaskMapper taskMapper;
     private final CurrentUserProvider currentUserProvider;
     private final NotificationService notificationService;
@@ -49,12 +54,39 @@ public class TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
     }
 
+    // Only the course's owner can hand a task to a fellow ACTIVE member — falls
+    // back to the creator (existing behavior) whenever an assignee isn't both
+    // requested and actually eligible, rather than erroring on a stray value.
+    private User resolveAssignee(TaskRequest request, Course course, User currentUser) {
+        if (request.getAssigneeUserId() == null) {
+            return currentUser;
+        }
+        if (course == null || !course.getUser().getId().equals(currentUser.getId())) {
+            return currentUser;
+        }
+        if (request.getAssigneeUserId().equals(currentUser.getId())) {
+            return currentUser;
+        }
+
+        boolean isActiveMember = courseMemberRepository
+                .findByCourseIdAndUserId(course.getId(), request.getAssigneeUserId())
+                .map(m -> m.getStatus() == MemberStatus.ACTIVE)
+                .orElse(false);
+        if (!isActiveMember) {
+            throw new BadRequestException("You can only assign tasks to active members of this course");
+        }
+
+        return userRepository.findById(request.getAssigneeUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.getAssigneeUserId()));
+    }
+
     @Transactional
     public TaskResponse createTask(TaskRequest request) {
         User currentUser = currentUserProvider.getCurrentUser();
         Course course = resolveCourse(request.getCourseId(), currentUser);
+        User assignee = resolveAssignee(request, course, currentUser);
 
-        if (taskRepository.existsByTitleAndUserId(request.getTitle(), currentUser.getId())) {
+        if (taskRepository.existsByTitleAndUserId(request.getTitle(), assignee.getId())) {
             throw new BadRequestException("Task title already exists");
         }
 
@@ -65,12 +97,24 @@ public class TaskService {
                 .completed(false)
                 .type(request.getType() != null ? request.getType() : TaskType.PERSONAL)
                 .priority(request.getPriority() != null ? request.getPriority() : TaskPriority.MEDIUM)
-                .user(currentUser)
+                .user(assignee)
                 .course(course)
                 .build();
 
         task = taskRepository.save(task);
+
+        if (!assignee.getId().equals(currentUser.getId())) {
+            notificationService.notify(assignee, NotificationType.TASK_REMINDER,
+                    "New task assigned",
+                    displayName(currentUser) + " assigned you \"" + task.getTitle() + "\" in " + course.getTitle(),
+                    "/courses/" + course.getId());
+        }
+
         return taskMapper.toResponse(task);
+    }
+
+    private String displayName(User user) {
+        return user.getFirstName() + " " + user.getLastName();
     }
 
     @Transactional(readOnly = true)

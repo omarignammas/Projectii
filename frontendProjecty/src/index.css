@@ -205,6 +205,22 @@
   .pill-priority-medium { background-color: hsl(var(--priority-medium-bg)); color: hsl(var(--priority-medium-fg)); }
   .pill-priority-high { background-color: hsl(var(--priority-high-bg)); color: hsl(var(--priority-high-fg)); }
 
+  /* Thin, unobtrusive scrollbar for message/list panes that scroll internally */
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+  }
+
   /* Sharp terminal-cursor blink — a hard on/off, not a smooth pulse */
   @keyframes blink {
     0%, 49% { opacity: 1; }

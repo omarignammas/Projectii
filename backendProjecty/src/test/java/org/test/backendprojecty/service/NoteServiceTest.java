@@ -16,11 +16,16 @@ import org.test.backendprojecty.dtos.request.NoteRequest;
 import org.test.backendprojecty.dtos.request.PaginationRequest;
 import org.test.backendprojecty.dtos.response.NoteResponse;
 import org.test.backendprojecty.dtos.response.PagingResult;
+import org.test.backendprojecty.entity.FocusRoom;
+import org.test.backendprojecty.entity.FocusRoomParticipant;
 import org.test.backendprojecty.entity.Note;
 import org.test.backendprojecty.entity.User;
+import org.test.backendprojecty.exception.BadRequestException;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
 import org.test.backendprojecty.mapper.NoteMapper;
 import org.test.backendprojecty.repository.CourseRepository;
+import org.test.backendprojecty.repository.FocusRoomParticipantRepository;
+import org.test.backendprojecty.repository.FocusRoomRepository;
 import org.test.backendprojecty.repository.NoteRepository;
 import org.test.backendprojecty.repository.TaskRepository;
 import org.test.backendprojecty.security.CurrentUserProvider;
@@ -45,6 +50,12 @@ class NoteServiceTest {
 
     @Mock
     private TaskRepository taskRepository;
+
+    @Mock
+    private FocusRoomRepository focusRoomRepository;
+
+    @Mock
+    private FocusRoomParticipantRepository focusRoomParticipantRepository;
 
     @Mock
     private NoteMapper noteMapper;
@@ -172,5 +183,55 @@ class NoteServiceTest {
         noteService.deleteNote(1L);
 
         verify(noteRepository).delete(note);
+    }
+
+    @Test
+    void createNote_WithRoomCode_ParticipantAllowed_AttachesRoom() {
+        FocusRoom room = FocusRoom.builder().id(5L).code("ABC-123").build();
+        NoteRequest requestWithRoom = NoteRequest.builder()
+                .title("Session Note")
+                .body("stuff we discussed")
+                .roomCode("ABC-123")
+                .build();
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(focusRoomParticipantRepository.findByRoomIdAndUserId(5L, 1L))
+                .thenReturn(Optional.of(FocusRoomParticipant.builder().room(room).user(user).build()));
+        when(noteRepository.save(any(Note.class))).thenReturn(note);
+        when(noteMapper.toResponse(note)).thenReturn(noteResponse);
+
+        noteService.createNote(requestWithRoom);
+
+        ArgumentCaptor<Note> captor = ArgumentCaptor.forClass(Note.class);
+        verify(noteRepository).save(captor.capture());
+        assertEquals(room, captor.getValue().getRoom());
+    }
+
+    @Test
+    void getRoomNotes_Participant_ReturnsAllRoomNotes() {
+        FocusRoom room = FocusRoom.builder().id(5L).code("ABC-123").build();
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(focusRoomParticipantRepository.findByRoomIdAndUserId(5L, 1L))
+                .thenReturn(Optional.of(FocusRoomParticipant.builder().room(room).user(user).build()));
+        when(noteRepository.findByRoomIdOrderByCreatedAtAsc(5L)).thenReturn(List.of(note));
+        when(noteMapper.toResponse(note)).thenReturn(noteResponse);
+
+        List<NoteResponse> result = noteService.getRoomNotes("ABC-123");
+
+        assertEquals(1, result.size());
+        assertEquals("Test Note", result.get(0).getTitle());
+    }
+
+    @Test
+    void createNote_WithRoomCode_NotAParticipant_ThrowsBadRequest() {
+        FocusRoom room = FocusRoom.builder().id(5L).code("ABC-123").build();
+        NoteRequest requestWithRoom = NoteRequest.builder()
+                .title("Session Note")
+                .roomCode("ABC-123")
+                .build();
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(focusRoomParticipantRepository.findByRoomIdAndUserId(5L, 1L)).thenReturn(Optional.empty());
+
+        assertThrows(BadRequestException.class, () -> noteService.createNote(requestWithRoom));
+        verify(noteRepository, never()).save(any(Note.class));
     }
 }

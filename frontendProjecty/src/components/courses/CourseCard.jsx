@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Trash2, Calendar, User, Youtube } from 'lucide-react'
+import { Trash2, Calendar, User, Youtube, Users } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -112,43 +112,51 @@ export const CourseCard = ({ course, onDelete }) => {
                 YouTube
               </Badge>
             )}
+            {!course.isOwner && (
+              <Badge variant="outline" className="shrink-0 gap-1 border-primary/30 bg-primary/10 text-primary">
+                <Users className="h-3 w-3" />
+                shared
+              </Badge>
+            )}
           </div>
 
-          <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDeleteClick}
-                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Course?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the course
-                  <strong className="text-foreground"> "{course.title}" </strong>
-                  and all its tasks.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDelete()
-                  }}
-                  disabled={deleting}
-                  className='bg-destructive hover:bg-destructive/90'
+          {course.isOwner && (
+            <AlertDialog open={open} onOpenChange={setOpen}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleDeleteClick}
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
                 >
-                  {deleting ? 'Deleting...' : 'Delete'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Course?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the course
+                    <strong className="text-foreground"> "{course.title}" </strong>
+                    and all its tasks.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete()
+                    }}
+                    disabled={deleting}
+                    className='bg-destructive hover:bg-destructive/90'
+                  >
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </CardHeader>
 
@@ -180,6 +188,12 @@ export const CourseCard = ({ course, onDelete }) => {
             <span className="flex items-center gap-1">
               <User className="h-3 w-3" />
               {course.instructorName}
+            </span>
+          )}
+          {!course.isOwner && (
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              by {course.ownerName}
             </span>
           )}
         </div>

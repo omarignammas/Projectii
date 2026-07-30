@@ -1,14 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, DoorOpen, Copy, RotateCcw } from 'lucide-react';
+import { CheckCircle2, DoorOpen, Copy, RotateCcw, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useToast } from '../../hooks/use-toast';
 import focusRoomService from '../../services/focusRoomService';
 
 export const SessionRecap = ({ room, userEmail }) => {
   const [rematching, setRematching] = useState(false);
+  const [report, setReport] = useState(null);
+  const [reportLoading, setReportLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!room.aiReportEnabled) {
+      setReportLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    let timeoutId;
+
+    const poll = async () => {
+      try {
+        const data = await focusRoomService.getSessionReport(room.code);
+        if (cancelled) return;
+        setReport(data);
+        if (data.status === 'PENDING') {
+          timeoutId = setTimeout(poll, 3000);
+        } else {
+          setReportLoading(false);
+        }
+      } catch {
+        if (!cancelled) setReportLoading(false);
+      }
+    };
+
+    poll();
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [room.code, room.aiReportEnabled]);
 
   const totalMinutes = room.workMinutes * room.totalRounds;
   const hours = Math.floor(totalMinutes / 60);
@@ -86,6 +119,25 @@ export const SessionRecap = ({ room, userEmail }) => {
           )}
         </div>
       </div>
+
+      {room.aiReportEnabled && (
+        <div className="mt-6 rounded-xl border border-border/80 bg-card p-6 text-left">
+          <p className="section-header mb-3">
+            <Sparkles className="h-4 w-4 text-primary" />
+            AI session report
+          </p>
+          {reportLoading || report?.status === 'PENDING' ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Generating your recap…
+            </div>
+          ) : report?.status === 'READY' ? (
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{report.content}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">Couldn't generate a report for this session.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

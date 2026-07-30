@@ -96,7 +96,7 @@ class YoutubeImportServiceTest {
                         new YoutubeApiClient.PlaylistItem("v2", "Lecture 1", 1)),
                 2));
         when(youtubeApiClient.fetchVideoDurations(anyList())).thenReturn(Map.of("v1", 10, "v2", 12));
-        when(courseMapper.toResponse(course)).thenReturn(CourseResponse.builder().id(1L).title("Linear Algebra").build());
+        when(courseMapper.toResponse(course, 1L)).thenReturn(CourseResponse.builder().id(1L).title("Linear Algebra").build());
 
         YoutubeImportResponse response = youtubeImportService.importPlaylist(request);
 

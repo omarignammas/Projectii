@@ -1,11 +1,13 @@
 package org.test.backendprojecty.service;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.test.backendprojecty.entity.*;
+import org.test.backendprojecty.event.FocusRoomCompletedEvent;
 import org.test.backendprojecty.mapper.FocusRoomMapper;
 import org.test.backendprojecty.repository.FocusRoomMessageRepository;
 import org.test.backendprojecty.repository.FocusRoomParticipantRepository;
@@ -36,6 +38,7 @@ public class FocusRoomSchedulerService {
     private final SimpMessagingTemplate messagingTemplate;
     private final TaskScheduler taskScheduler;
     private final TransactionTemplate transactionTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final Map<Long, ScheduledFuture<?>> scheduledPhaseTasks = new ConcurrentHashMap<>();
 
@@ -45,7 +48,8 @@ public class FocusRoomSchedulerService {
                                       FocusRoomMapper focusRoomMapper,
                                       SimpMessagingTemplate messagingTemplate,
                                       TaskScheduler focusRoomTaskScheduler,
-                                      PlatformTransactionManager transactionManager) {
+                                      PlatformTransactionManager transactionManager,
+                                      ApplicationEventPublisher eventPublisher) {
         this.focusRoomRepository = focusRoomRepository;
         this.participantRepository = participantRepository;
         this.messageRepository = messageRepository;
@@ -53,6 +57,7 @@ public class FocusRoomSchedulerService {
         this.messagingTemplate = messagingTemplate;
         this.taskScheduler = focusRoomTaskScheduler;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.eventPublisher = eventPublisher;
     }
 
     public void scheduleNextPhase(FocusRoom room) {
@@ -103,6 +108,7 @@ public class FocusRoomSchedulerService {
             }
             participantRepository.saveAll(participants);
             focusRoomRepository.save(room);
+            eventPublisher.publishEvent(new FocusRoomCompletedEvent(room.getId()));
             postSystemMessage(room, "Session Complete");
             broadcastRoomState(room);
             scheduledPhaseTasks.remove(room.getId());

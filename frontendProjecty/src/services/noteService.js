@@ -37,6 +37,11 @@ export const noteService = {
   async deleteNote(noteId) {
     await api.delete(`/notes/${noteId}`);
   },
+
+  async getRoomNotes(roomCode) {
+    const response = await api.get(`/notes/room/${roomCode}`);
+    return response.data;
+  },
 };
 
 export default noteService;

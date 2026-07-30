@@ -14,6 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 public class NoteResponse {
     private Long id;
+    private Long userId;
+    private String userName;
     private String title;
     private String body;
     private List<String> tags;
@@ -22,6 +24,7 @@ public class NoteResponse {
     private String courseTitle;
     private Long taskId;
     private String taskTitle;
+    private String roomCode;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

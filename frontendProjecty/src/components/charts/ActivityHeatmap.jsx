@@ -28,7 +28,7 @@ export const ActivityHeatmap = ({ data }) => {
   let lastMonth = null;
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto pt-8">
       <div className="inline-flex gap-1">
         {weeks.map((week, wi) => {
           const firstDay = week[0];
@@ -40,11 +40,30 @@ export const ActivityHeatmap = ({ data }) => {
             <div key={wi} className="flex flex-col gap-1">
               <p className="h-3 text-[9px] leading-3 text-muted-foreground">{showMonth ? month : ''}</p>
               {week.map((day) => (
-                <div
-                  key={day.date}
-                  title={day.isFuture ? undefined : `${day.count} task${day.count === 1 ? '' : 's'} completed on ${format(new Date(day.date), 'MMM d, yyyy')}`}
-                  className={`h-3 w-3 rounded-sm ${day.isFuture ? 'invisible' : LEVEL_CLASSES[levelFor(day.count)]}`}
-                />
+                <div key={day.date} className="group relative">
+                  <div
+                    tabIndex={day.isFuture ? -1 : 0}
+                    role="img"
+                    aria-label={
+                      day.isFuture
+                        ? undefined
+                        : `${day.count} task${day.count === 1 ? '' : 's'} completed on ${format(new Date(day.date), 'MMM d, yyyy')}`
+                    }
+                    className={`h-3 w-3 rounded-sm outline-none transition-all ${
+                      day.isFuture
+                        ? 'invisible'
+                        : `${LEVEL_CLASSES[levelFor(day.count)]} hover:ring-2 hover:ring-primary/60 focus:ring-2 focus:ring-primary/60`
+                    }`}
+                  />
+                  {!day.isFuture && (
+                    <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-border/80 bg-popover px-2.5 py-1.5 text-center opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+                      <p className="text-sm font-bold text-foreground">
+                        {day.count} task{day.count === 1 ? '' : 's'}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">{format(new Date(day.date), 'EEE, MMM d')}</p>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           );
