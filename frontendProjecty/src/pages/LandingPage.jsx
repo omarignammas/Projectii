@@ -6,7 +6,7 @@ import {
   Layers,
   CalendarClock,
   Gauge,
-  SunMoon,
+  Flame,
   CheckCircle2,
   Home,
   ListTodo,
@@ -21,13 +21,17 @@ import { useAuth } from '../hooks/useAuth';
 import { Reveal } from '../components/shared/Reveal';
 import ScreensShowcase from '../components/landing/ScreensShowcase';
 import CollaborateShowcase from '../components/landing/CollaborateShowcase';
+import AiReportShowcase from '../components/landing/AiReportShowcase';
+import StepsTimeline from '../components/landing/StepsTimeline';
 import RotatingWord from '../components/landing/RotatingWord';
+import { CoursesAnimation, DueDatesAnimation, ProgressAnimation, StreakAnimation } from '../components/landing/FeatureAnimations';
 import HeroNotifications from '../components/landing/HeroNotifications';
 import { ModeToggle } from '../components/ui/mode-toggle';
 
 const NAV_LINKS = [
   { href: '#screens', label: 'Screens' },
   { href: '#collaborate', label: 'Collaborate' },
+  { href: '#ai-reports', label: 'AI' },
   { href: '#workspace', label: 'Workspace' },
   { href: '#features', label: 'Features' },
   { href: '#how-it-works', label: 'Process' },
@@ -43,21 +47,25 @@ const FEATURES = [
     icon: Layers,
     title: 'Courses as containers',
     description: 'Group each term into courses, add tasks underneath, and keep every assignment in one place.',
+    Anim: CoursesAnimation,
   },
   {
     icon: CalendarClock,
     title: 'Due dates that matter',
     description: 'Set a due date per task and Projectii flags anything overdue automatically — nothing slips through.',
+    Anim: DueDatesAnimation,
   },
   {
     icon: Gauge,
     title: 'Progress at a glance',
     description: 'Live completion rings on every course and a dashboard summary roll everything up in real time.',
+    Anim: ProgressAnimation,
   },
   {
-    icon: SunMoon,
-    title: 'Looks good either way',
-    description: 'A considered dark theme by default, with a one-click light mode when you want it.',
+    icon: Flame,
+    title: 'Streaks that keep you going',
+    description: 'Complete something every day and Projectii tracks your streak automatically — miss a day and it resets, no excuses.',
+    Anim: StreakAnimation,
   },
 ];
 
@@ -290,6 +298,24 @@ export const LandingPage = () => {
         </div>
       </section>
 
+      {/* AI: chats, notes, and sessions summarized into a report */}
+      <section id="ai-reports" className="border-t border-border/80 py-20">
+        <div className="container mx-auto px-4">
+          <Reveal className="mb-10 text-center">
+            <p className="eyebrow-label mx-auto mb-4 w-fit">[ ai ]</p>
+            <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
+              Your session, <span className="text-primary">summarized for you</span>
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+              Chat, take notes, focus together — when the session ends, AI turns it all into one clean report for everyone in the room.
+            </p>
+          </Reveal>
+          <Reveal delay={100}>
+            <AiReportShowcase />
+          </Reveal>
+        </div>
+      </section>
+
       {/* Workspace: terminal mock + area table */}
       <section id="workspace" className="border-t border-border/80 py-20">
         <div className="container mx-auto px-4">
@@ -358,11 +384,12 @@ export const LandingPage = () => {
               <Reveal
                 key={feature.title}
                 delay={i * 100}
-                className="rounded-xl border border-border/80 bg-card p-6 transition-all hover:-translate-y-1 hover:border-primary/40"
+                className="group rounded-xl border border-border/80 bg-card p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10"
               >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <feature.icon className="h-5 w-5" />
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary/20">
+                  <feature.icon className="h-5 w-5 transition-transform duration-300 group-hover:rotate-6" />
                 </div>
+                <feature.Anim />
                 <h3 className="mb-2 font-semibold">{feature.title}</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
               </Reveal>
@@ -379,15 +406,9 @@ export const LandingPage = () => {
             <h2 className="mb-14 text-3xl font-bold text-foreground sm:text-4xl">Up and running in three steps</h2>
           </Reveal>
 
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            {STEPS.map((step, i) => (
-              <Reveal key={step.number} delay={i * 100} className="text-left">
-                <span className="font-numeric text-sm font-semibold text-primary">{step.number}</span>
-                <h3 className="mt-2 mb-2 text-lg font-semibold">{step.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
-              </Reveal>
-            ))}
-          </div>
+          <Reveal delay={100}>
+            <StepsTimeline steps={STEPS} />
+          </Reveal>
         </div>
       </section>
 
