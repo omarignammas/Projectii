@@ -1,6 +1,6 @@
 package org.test.backendprojecty.entity;
 
-public enum ReportStatus {
+public enum GenerationStatus {
     PENDING,
     READY,
     FAILED

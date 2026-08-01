@@ -11,25 +11,36 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+// Always generated from an existing CourseSummary's material — no separate
+// upload/extraction path for quizzes, so the "owner" here may differ from
+// summary.getUser() when a friend with shared access generates their own.
 @Entity
-@Table(name = "focus_room_reports")
+@Table(name = "quizzes")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class FocusRoomReport {
+public class Quiz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false, unique = true)
-    private FocusRoom room;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "summary_id", nullable = false)
+    private CourseSummary summary;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private QuizDifficulty difficulty;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

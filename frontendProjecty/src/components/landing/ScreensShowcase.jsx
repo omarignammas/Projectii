@@ -353,13 +353,23 @@ const FocusChatPanel = () => {
                 {m.body}
               </p>
             ) : (
-              <p className="flex items-center gap-1 text-[10px]">
-                <span className="font-medium text-foreground">{m.sender}</span>
-                <span className="flex items-center gap-1 text-muted-foreground">
-                  {m.icon && <m.icon className="h-2.5 w-2.5 shrink-0" />}
-                  {m.body}
-                </span>
-              </p>
+              <div className={`flex ${m.sender === 'You' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[78%] rounded-2xl px-2.5 py-1.5 text-[10px] leading-snug shadow-sm ${
+                    m.sender === 'You'
+                      ? 'rounded-br-sm bg-primary text-primary-foreground'
+                      : 'rounded-bl-sm bg-accent text-foreground'
+                  }`}
+                >
+                  {m.sender !== 'You' && (
+                    <span className="mb-0.5 block text-[8px] font-semibold text-primary">{m.sender}</span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    {m.icon && <m.icon className="h-2.5 w-2.5 shrink-0" />}
+                    {m.body}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
         ))}

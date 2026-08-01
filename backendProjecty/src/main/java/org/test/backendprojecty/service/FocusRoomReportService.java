@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -63,7 +64,8 @@ public class FocusRoomReportService {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Async("reportExecutor")
+    @Async("aiExecutor")
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onRoomCompleted(FocusRoomCompletedEvent event) {
         FocusRoom room = focusRoomRepository.findById(event.roomId()).orElse(null);
         if (room == null || !room.isAiReportEnabled()) {
@@ -74,12 +76,12 @@ public class FocusRoomReportService {
         }
 
         FocusRoomReport report = reportRepository.save(
-                FocusRoomReport.builder().room(room).status(ReportStatus.PENDING).build());
+                FocusRoomReport.builder().room(room).status(GenerationStatus.PENDING).build());
 
         try {
             String summary = llmApiClient.generateText(buildPrompt(room));
             report.setContent(summary);
-            report.setStatus(ReportStatus.READY);
+            report.setStatus(GenerationStatus.READY);
             reportRepository.save(report);
 
             List<FocusRoomParticipant> participants = participantRepository.findByRoomIdOrderByCreatedAtAsc(room.getId());
@@ -91,7 +93,7 @@ public class FocusRoomReportService {
             }
         } catch (Exception e) {
             log.warn("Failed to generate AI report for room {}: {}", room.getId(), e.getMessage());
-            report.setStatus(ReportStatus.FAILED);
+            report.setStatus(GenerationStatus.FAILED);
             reportRepository.save(report);
         }
     }

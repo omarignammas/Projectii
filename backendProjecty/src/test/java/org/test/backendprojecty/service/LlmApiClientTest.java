@@ -14,17 +14,16 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.test.backendprojecty.exception.ExternalApiException;
 
-import java.net.URI;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LlmApiClientTest {
 
-    private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+    private static final String BASE_URL = "https://api.groq.com/openai/v1";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Mock
@@ -34,7 +33,7 @@ class LlmApiClientTest {
 
     @BeforeEach
     void setUp() {
-        client = new LlmApiClient(restTemplate, "test-api-key", BASE_URL, "gemini-2.0-flash");
+        client = new LlmApiClient(restTemplate, "test-api-key", BASE_URL, "openai/gpt-oss-120b", "qwen/qwen3.6-27b");
     }
 
     private JsonNode json(String text) {
@@ -47,8 +46,8 @@ class LlmApiClientTest {
 
     @Test
     void generateText_ReturnsText_WhenSuccessful() {
-        when(restTemplate.postForObject(any(URI.class), any(HttpEntity.class), eq(JsonNode.class))).thenReturn(json("""
-                { "candidates": [ { "content": { "parts": [ { "text": "Great session recap!" } ] } } ] }
+        when(restTemplate.postForObject(eq(BASE_URL + "/chat/completions"), any(HttpEntity.class), eq(JsonNode.class))).thenReturn(json("""
+                { "choices": [ { "message": { "content": "Great session recap!" } } ] }
                 """));
 
         String result = client.generateText("summarize this");
@@ -58,7 +57,7 @@ class LlmApiClientTest {
 
     @Test
     void generateText_ThrowsExternalApiException_WhenApiKeyBlank() {
-        LlmApiClient unconfigured = new LlmApiClient(restTemplate, "", BASE_URL, "gemini-2.0-flash");
+        LlmApiClient unconfigured = new LlmApiClient(restTemplate, "", BASE_URL, "openai/gpt-oss-120b", "qwen/qwen3.6-27b");
 
         assertThrows(ExternalApiException.class, () -> unconfigured.generateText("summarize this"));
         verifyNoInteractions(restTemplate);
@@ -66,7 +65,7 @@ class LlmApiClientTest {
 
     @Test
     void generateText_ThrowsExternalApiException_OnHttpClientError() {
-        when(restTemplate.postForObject(any(URI.class), any(HttpEntity.class), eq(JsonNode.class)))
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(JsonNode.class)))
                 .thenThrow(HttpClientErrorException.create(HttpStatus.FORBIDDEN, "Forbidden", null, null, null));
 
         assertThrows(ExternalApiException.class, () -> client.generateText("summarize this"));
@@ -74,17 +73,37 @@ class LlmApiClientTest {
 
     @Test
     void generateText_ThrowsExternalApiException_OnNetworkError() {
-        when(restTemplate.postForObject(any(URI.class), any(HttpEntity.class), eq(JsonNode.class)))
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(JsonNode.class)))
                 .thenThrow(new ResourceAccessException("timeout"));
 
         assertThrows(ExternalApiException.class, () -> client.generateText("summarize this"));
     }
 
     @Test
-    void generateText_ThrowsExternalApiException_WhenResponseHasNoCandidates() {
-        when(restTemplate.postForObject(any(URI.class), any(HttpEntity.class), eq(JsonNode.class)))
-                .thenReturn(json("{ \"candidates\": [] }"));
+    void generateText_ThrowsExternalApiException_WhenResponseHasNoChoices() {
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(JsonNode.class)))
+                .thenReturn(json("{ \"choices\": [] }"));
 
         assertThrows(ExternalApiException.class, () -> client.generateText("summarize this"));
+    }
+
+    @Test
+    void generateFromImage_ReturnsText_WhenSuccessful() {
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(JsonNode.class))).thenReturn(json("""
+                { "choices": [ { "message": { "content": "A diagram of the water cycle." } } ] }
+                """));
+
+        String result = client.generateFromImage("describe this image", new byte[]{1, 2, 3}, "image/png");
+
+        assertEquals("A diagram of the water cycle.", result);
+    }
+
+    @Test
+    void generateFromImage_ThrowsExternalApiException_WhenApiKeyBlank() {
+        LlmApiClient unconfigured = new LlmApiClient(restTemplate, "", BASE_URL, "openai/gpt-oss-120b", "qwen/qwen3.6-27b");
+
+        assertThrows(ExternalApiException.class,
+                () -> unconfigured.generateFromImage("describe this image", new byte[]{1, 2, 3}, "image/png"));
+        verifyNoInteractions(restTemplate);
     }
 }

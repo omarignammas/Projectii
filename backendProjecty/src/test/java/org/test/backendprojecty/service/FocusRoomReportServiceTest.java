@@ -13,7 +13,7 @@ import org.test.backendprojecty.entity.FocusRoomParticipant;
 import org.test.backendprojecty.entity.FocusRoomReport;
 import org.test.backendprojecty.entity.NotificationType;
 import org.test.backendprojecty.entity.ParticipantStatus;
-import org.test.backendprojecty.entity.ReportStatus;
+import org.test.backendprojecty.entity.GenerationStatus;
 import org.test.backendprojecty.entity.User;
 import org.test.backendprojecty.event.FocusRoomCompletedEvent;
 import org.test.backendprojecty.exception.BadRequestException;
@@ -91,7 +91,7 @@ class FocusRoomReportServiceTest {
 
         ArgumentCaptor<FocusRoomReport> captor = ArgumentCaptor.forClass(FocusRoomReport.class);
         verify(reportRepository, times(2)).save(captor.capture());
-        assertEquals(ReportStatus.READY, captor.getValue().getStatus());
+        assertEquals(GenerationStatus.READY, captor.getValue().getStatus());
         assertEquals("Great session!", captor.getValue().getContent());
 
         verify(notificationService).notify(eq(host), eq(NotificationType.FOCUS_ROOM_REPORT_READY),
@@ -130,7 +130,7 @@ class FocusRoomReportServiceTest {
 
         ArgumentCaptor<FocusRoomReport> captor = ArgumentCaptor.forClass(FocusRoomReport.class);
         verify(reportRepository, times(2)).save(captor.capture());
-        assertEquals(ReportStatus.FAILED, captor.getValue().getStatus());
+        assertEquals(GenerationStatus.FAILED, captor.getValue().getStatus());
         verifyNoInteractions(notificationService);
     }
 
@@ -150,11 +150,11 @@ class FocusRoomReportServiceTest {
         when(participantRepository.findByRoomIdAndUserId(10L, 1L)).thenReturn(Optional.of(
                 FocusRoomParticipant.builder().room(room).user(host).build()));
         when(reportRepository.findByRoomId(10L)).thenReturn(Optional.of(
-                FocusRoomReport.builder().status(ReportStatus.READY).content("Recap text").build()));
+                FocusRoomReport.builder().status(GenerationStatus.READY).content("Recap text").build()));
 
         FocusRoomReportResponse response = service.getReport("ABC-123");
 
-        assertEquals(ReportStatus.READY, response.getStatus());
+        assertEquals(GenerationStatus.READY, response.getStatus());
         assertEquals("Recap text", response.getContent());
     }
 

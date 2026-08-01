@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Sparkles,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { to: '/focus-rooms', label: 'Focus Rooms', icon: Timer },
   { to: '/friends', label: 'Friends', icon: Users },
   { to: '/notes', label: 'Notes', icon: NotebookText },
+  { to: '/summaries', label: 'Summaries', icon: Sparkles },
   { to: '/stats', label: 'Stats', icon: BarChart3 },
   { to: '/overdue', label: 'Overdue', icon: AlertTriangle },
 ];

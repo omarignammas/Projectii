@@ -16,6 +16,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public WebMvcConfig(@Value("${app.uploads.dir:uploads}") String uploadsDir) {
         this.uploadsDir = uploadsDir;
         new File(uploadsDir, "avatars").mkdirs();
+        new File(uploadsDir, "course-files").mkdirs();
     }
 
     @Override

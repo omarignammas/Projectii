@@ -22,6 +22,7 @@ import { Reveal } from '../components/shared/Reveal';
 import ScreensShowcase from '../components/landing/ScreensShowcase';
 import CollaborateShowcase from '../components/landing/CollaborateShowcase';
 import AiReportShowcase from '../components/landing/AiReportShowcase';
+import SummaryQuizShowcase from '../components/landing/SummaryQuizShowcase';
 import StepsTimeline from '../components/landing/StepsTimeline';
 import RotatingWord from '../components/landing/RotatingWord';
 import { CoursesAnimation, DueDatesAnimation, ProgressAnimation, StreakAnimation } from '../components/landing/FeatureAnimations';

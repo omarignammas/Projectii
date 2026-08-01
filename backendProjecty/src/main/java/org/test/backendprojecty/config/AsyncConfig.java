@@ -11,14 +11,14 @@ import java.util.concurrent.Executor;
 @EnableAsync
 public class AsyncConfig {
 
-    // Isolates slow LLM network calls (AI session reports) from the app's other
-    // threads — small pool since report generation is low-frequency, not hot-path.
-    @Bean(name = "reportExecutor")
-    public Executor reportExecutor() {
+    // Isolates slow LLM network/generation work (focus-room reports, course
+    // summaries, quizzes) from the app's other threads.
+    @Bean(name = "aiExecutor")
+    public Executor aiExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(2);
-        executor.setThreadNamePrefix("report-executor-");
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setThreadNamePrefix("ai-executor-");
         executor.initialize();
         return executor;
     }

@@ -6,41 +6,32 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "focus_room_reports")
+@Table(name = "quiz_shares", uniqueConstraints = @UniqueConstraint(columnNames = {"quiz_id", "shared_with_user_id"}))
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class FocusRoomReport {
+public class QuizShare {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false, unique = true)
-    private FocusRoom room;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "quiz_id", nullable = false)
+    private Quiz quiz;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private GenerationStatus status = GenerationStatus.PENDING;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shared_with_user_id", nullable = false)
+    private User sharedWithUser;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
 }

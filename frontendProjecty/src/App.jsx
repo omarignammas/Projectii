@@ -31,6 +31,9 @@ const OverduePage = lazy(() => import('./pages/OverduePage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const SummariesPage = lazy(() => import('./pages/SummariesPage'));
+const SummaryDetailPage = lazy(() => import('./pages/SummaryDetailPage'));
+const QuizTakePage = lazy(() => import('./pages/QuizTakePage'));
 
 const PageLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-background">
@@ -74,6 +77,9 @@ function App() {
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+              <Route path="/summaries" element={<SummariesPage />} />
+              <Route path="/summaries/:summaryId" element={<SummaryDetailPage />} />
+              <Route path="/quizzes/:quizId/take" element={<QuizTakePage />} />
             </Route>
           </Routes>
         </Suspense>
