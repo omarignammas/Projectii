@@ -39,6 +39,11 @@ public class Notification {
 
     private String link;
 
+    // Room code (or, in future, another resource's identifier) an actionable
+    // notification refers to — e.g. which Focus Room a FOCUS_ROOM_INVITE is for.
+    // Whether it's still actionable is computed at read time, not stored here.
+    private String actionResourceId;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean read = false;

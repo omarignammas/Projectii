@@ -1,11 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Layers } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import Avatar from '../shared/Avatar';
 import noteService from '../../services/noteService';
+
+// Groups the room's flat note feed into topic threads by matching title
+// (case/whitespace-insensitive) — no separate "topic" entity needed, a topic
+// is just whatever title multiple notes happen to share. Newest topic (by its
+// most recent note) first, notes within a topic oldest-first (a thread read top-to-bottom).
+const groupIntoTopics = (notes) => {
+  const byKey = new Map();
+  for (const note of notes) {
+    const key = note.title.trim().toLowerCase();
+    if (!byKey.has(key)) {
+      byKey.set(key, { key, title: note.title.trim(), notes: [] });
+    }
+    byKey.get(key).notes.push(note);
+  }
+  return [...byKey.values()].sort((a, b) => {
+    const aLatest = a.notes[a.notes.length - 1].createdAt;
+    const bLatest = b.notes[b.notes.length - 1].createdAt;
+    return new Date(bLatest) - new Date(aLatest);
+  });
+};
 
 export const SessionNotes = ({ roomCode }) => {
   const [notes, setNotes] = useState([]);
@@ -14,6 +34,8 @@ export const SessionNotes = ({ roomCode }) => {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showTopicSuggestions, setShowTopicSuggestions] = useState(false);
+  const titleBoxRef = useRef(null);
 
   const loadNotes = useCallback(async () => {
     try {
@@ -26,9 +48,31 @@ export const SessionNotes = ({ roomCode }) => {
     }
   }, [roomCode]);
 
+  // Notes aren't part of the room's STOMP snapshot — a light poll is enough
+  // for "someone jotted a note" (no need for message-grade real-time here),
+  // matching the polling pattern already used for other async-ish state in this app.
   useEffect(() => {
     loadNotes();
+    const intervalId = setInterval(loadNotes, 4000);
+    return () => clearInterval(intervalId);
   }, [loadNotes]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (titleBoxRef.current && !titleBoxRef.current.contains(e.target)) {
+        setShowTopicSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const topics = useMemo(() => groupIntoTopics(notes), [notes]);
+  const topicTitles = useMemo(() => topics.map((t) => t.title), [topics]);
+  const matchingTopics = useMemo(() => {
+    if (!title.trim()) return topicTitles;
+    return topicTitles.filter((t) => t.toLowerCase().includes(title.trim().toLowerCase()) && t.toLowerCase() !== title.trim().toLowerCase());
+  }, [title, topicTitles]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,6 +83,7 @@ export const SessionNotes = ({ roomCode }) => {
       setTitle('');
       setBody('');
       setShowForm(false);
+      setShowTopicSuggestions(false);
       await loadNotes();
     } catch (err) {
       console.error('Error adding note:', err);
@@ -52,22 +97,31 @@ export const SessionNotes = ({ roomCode }) => {
       <div className="thin-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         {loading ? (
           <p className="text-center text-xs text-muted-foreground">Loading notes…</p>
-        ) : notes.length === 0 ? (
+        ) : topics.length === 0 ? (
           <p className="text-center text-xs text-muted-foreground">
-            No notes yet — jot down anything worth remembering.
+            No topics yet — start one below with anything worth remembering.
           </p>
         ) : (
-          notes.map((note) => (
-            <div key={note.id} className="animate-in fade-in rounded-lg border border-border/60 bg-card p-3">
-              <div className="mb-1.5 flex items-center gap-2">
-                <Avatar name={note.userName} size="sm" />
-                <span className="text-xs font-medium text-foreground">{note.userName}</span>
-                <span className="ml-auto text-[10px] text-muted-foreground">
-                  {format(new Date(note.createdAt), 'HH:mm')}
-                </span>
+          topics.map((topic) => (
+            <div key={topic.key} className="animate-in fade-in rounded-lg border border-border/60 bg-card p-3">
+              <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <Layers className="h-3.5 w-3.5 shrink-0 text-primary" />
+                {topic.title}
+              </p>
+              <div className="space-y-2.5 border-l border-border/60 pl-3">
+                {topic.notes.map((note) => (
+                  <div key={note.id}>
+                    <div className="mb-1 flex items-center gap-2">
+                      <Avatar name={note.userName} size="sm" />
+                      <span className="text-xs font-medium text-foreground">{note.userName}</span>
+                      <span className="ml-auto text-[10px] text-muted-foreground">
+                        {format(new Date(note.createdAt), 'HH:mm')}
+                      </span>
+                    </div>
+                    {note.body && <p className="whitespace-pre-wrap text-xs text-muted-foreground">{note.body}</p>}
+                  </div>
+                ))}
               </div>
-              <p className="text-sm font-medium text-foreground">{note.title}</p>
-              {note.body && <p className="mt-0.5 whitespace-pre-wrap text-xs text-muted-foreground">{note.body}</p>}
             </div>
           ))
         )}
@@ -77,7 +131,7 @@ export const SessionNotes = ({ roomCode }) => {
         {showForm ? (
           <form onSubmit={handleSubmit} className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground">New note</span>
+              <span className="text-xs font-medium text-foreground">Add to a topic</span>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
@@ -86,13 +140,35 @@ export const SessionNotes = ({ roomCode }) => {
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
-            <Input
-              placeholder="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              autoFocus
-              required
-            />
+            <div ref={titleBoxRef} className="relative">
+              <Input
+                placeholder="Topic title — new or existing"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onFocus={() => setShowTopicSuggestions(true)}
+                autoComplete="off"
+                autoFocus
+                required
+              />
+              {showTopicSuggestions && matchingTopics.length > 0 && (
+                <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-border/80 bg-card shadow-lg">
+                  {matchingTopics.map((t) => (
+                    <button
+                      type="button"
+                      key={t}
+                      onClick={() => {
+                        setTitle(t);
+                        setShowTopicSuggestions(false);
+                      }}
+                      className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-xs transition-colors hover:bg-accent"
+                    >
+                      <Layers className="h-3 w-3 shrink-0 text-primary" />
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <Textarea
               placeholder="Anything worth remembering…"
               value={body}

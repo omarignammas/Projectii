@@ -28,7 +28,10 @@ export const FocusRoomPage = () => {
         const snapshot = await focusRoomService.getRoomByCode(roomCode);
         const myParticipant = snapshot.participants.find((p) => p.email === user.email);
         const needsJoin =
-          (!myParticipant || myParticipant.status === 'INVITED' || myParticipant.status === 'QUIT') &&
+          (!myParticipant ||
+            myParticipant.status === 'INVITED' ||
+            myParticipant.status === 'QUIT' ||
+            myParticipant.status === 'DECLINED') &&
           snapshot.status !== 'COMPLETED';
         const finalSnapshot = needsJoin ? await focusRoomService.joinRoom(roomCode) : snapshot;
         if (!cancelled) {
@@ -84,7 +87,7 @@ export const FocusRoomPage = () => {
   const isHost = room.participants.some((p) => p.email === user.email && p.host);
 
   return (
-    <div className="accent-teal container mx-auto flex h-full min-h-0 flex-col px-4 py-10">
+    <div className="accent-teal flex h-full w-full min-h-0 flex-col px-4 py-10">
       {room.status === 'LOBBY' && (
         <RoomLobby
           room={room}

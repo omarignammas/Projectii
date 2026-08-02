@@ -50,6 +50,12 @@ public class FocusRoomController {
         return ResponseEntity.ok(focusRoomService.joinRoom(code));
     }
 
+    @PostMapping("/{code}/decline")
+    public ResponseEntity<Void> declineInvite(@PathVariable String code) {
+        focusRoomService.declineInvite(code);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{code}/rematch")
     public ResponseEntity<FocusRoomResponse> rematchRoom(@PathVariable String code) {
         return ResponseEntity.status(HttpStatus.CREATED).body(focusRoomService.rematchRoom(code));

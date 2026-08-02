@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ArrowLeft, FileText, RotateCcw, Share2, Sparkles, HelpCircle, ArrowRight } from 'lucide-react';
+import { ArrowLeft, FileText, RotateCcw, Share2, Sparkles, HelpCircle, ArrowRight, X, Paperclip } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -12,25 +12,12 @@ import { Label } from '../components/ui/label';
 import PageHero from '../components/shared/PageHero';
 import MermaidDiagram from '../components/summaries/MermaidDiagram';
 import ShareDialog from '../components/summaries/ShareDialog';
+import markdownComponents from '../components/shared/markdownComponents';
 import courseSummaryService from '../services/courseSummaryService';
 import quizService from '../services/quizService';
 import { useToast } from '../hooks/use-toast';
 
 const DIFFICULTY_LABEL = { EASY: 'Easy', MEDIUM: 'Medium', HARD: 'Hard' };
-
-const markdownComponents = {
-  h1: (props) => <h2 className="mb-3 mt-6 text-xl font-bold text-foreground first:mt-0" {...props} />,
-  h2: (props) => <h3 className="mb-2 mt-5 text-lg font-semibold text-foreground first:mt-0" {...props} />,
-  h3: (props) => <h4 className="mb-2 mt-4 text-base font-semibold text-foreground first:mt-0" {...props} />,
-  p: (props) => <p className="mb-3 text-sm leading-relaxed text-muted-foreground" {...props} />,
-  ul: (props) => <ul className="mb-3 ml-5 list-disc space-y-1 text-sm text-muted-foreground" {...props} />,
-  ol: (props) => <ol className="mb-3 ml-5 list-decimal space-y-1 text-sm text-muted-foreground" {...props} />,
-  li: (props) => <li className="text-sm text-muted-foreground" {...props} />,
-  strong: (props) => <strong className="font-semibold text-foreground" {...props} />,
-  table: (props) => <table className="mb-3 w-full border-collapse text-sm" {...props} />,
-  th: (props) => <th className="border border-border/60 bg-accent/50 p-2 text-left text-xs font-semibold text-foreground" {...props} />,
-  td: (props) => <td className="border border-border/60 p-2 text-muted-foreground" {...props} />,
-};
 
 export const SummaryDetailPage = () => {
   const { summaryId } = useParams();
@@ -42,9 +29,12 @@ export const SummaryDetailPage = () => {
   const [quizzes, setQuizzes] = useState([]);
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
   const [difficulty, setDifficulty] = useState('MEDIUM');
+  const [referenceFile, setReferenceFile] = useState(null);
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const referenceInputRef = useRef(null);
 
   const fetchQuizzes = async (id) => {
     const result = await quizService.getQuizzesForSummary(id);
@@ -93,11 +83,25 @@ export const SummaryDetailPage = () => {
     }
   };
 
+  const handleCancel = async () => {
+    setCancelling(true);
+    try {
+      await courseSummaryService.cancel(summaryId);
+      setSummary((prev) => ({ ...prev, status: 'CANCELLED' }));
+      toast({ title: 'Cancelled', description: 'Summary generation was cancelled.' });
+    } catch (error) {
+      toast({ title: 'Could not cancel', description: error.response?.data?.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const handleGenerateQuiz = async () => {
     setGeneratingQuiz(true);
     try {
-      const quiz = await quizService.requestQuizGeneration(summaryId, difficulty);
+      const quiz = await quizService.requestQuizGeneration(summaryId, difficulty, referenceFile);
       setIsQuizDialogOpen(false);
+      setReferenceFile(null);
       toast({ title: 'Quiz generating', description: 'It\'ll be ready in a few seconds.' });
       fetchQuizzes(summaryId);
       navigate(`/quizzes/${quiz.id}/take`);
@@ -145,9 +149,17 @@ export const SummaryDetailPage = () => {
 
       {summary.status === 'PENDING' && (
         <Card className="border-border/80 bg-card">
-          <CardContent className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
-            <Sparkles className="h-4 w-4 animate-pulse text-primary" />
-            Generating your summary and diagram…
+          <CardContent className="flex items-center justify-between gap-3 p-6">
+            <p className="flex items-center gap-3 text-sm text-muted-foreground">
+              <Sparkles className="h-4 w-4 animate-pulse text-primary" />
+              Generating your summary and diagram…
+            </p>
+            {summary.isOwner && (
+              <Button variant="outline" size="sm" onClick={handleCancel} disabled={cancelling}>
+                <X className="mr-2 h-3.5 w-3.5" />
+                {cancelling ? 'Cancelling...' : 'Cancel'}
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -156,6 +168,20 @@ export const SummaryDetailPage = () => {
         <Card className="border-border/80 bg-card">
           <CardContent className="flex items-center justify-between gap-3 p-6">
             <p className="text-sm text-muted-foreground">Couldn't generate a summary for this file.</p>
+            {summary.isOwner && (
+              <Button variant="outline" size="sm" onClick={handleRetry} disabled={retrying}>
+                <RotateCcw className={`mr-2 h-3.5 w-3.5 ${retrying ? 'animate-spin' : ''}`} />
+                {retrying ? 'Retrying...' : 'Retry'}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {summary.status === 'CANCELLED' && (
+        <Card className="border-border/80 bg-card">
+          <CardContent className="flex items-center justify-between gap-3 p-6">
+            <p className="text-sm text-muted-foreground">Summary generation was cancelled.</p>
             {summary.isOwner && (
               <Button variant="outline" size="sm" onClick={handleRetry} disabled={retrying}>
                 <RotateCcw className={`mr-2 h-3.5 w-3.5 ${retrying ? 'animate-spin' : ''}`} />
@@ -208,6 +234,9 @@ export const SummaryDetailPage = () => {
                           {quiz.status === 'FAILED' && (
                             <span className="text-xs text-destructive">failed</span>
                           )}
+                          {quiz.status === 'CANCELLED' && (
+                            <span className="text-xs text-muted-foreground">cancelled</span>
+                          )}
                         </div>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -226,21 +255,71 @@ export const SummaryDetailPage = () => {
             <DialogTitle>Generate a quiz</DialogTitle>
             <DialogDescription>Choose a difficulty level for the questions.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-2">
-            <Label>Difficulty</Label>
-            <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="EASY">Easy</SelectItem>
-                <SelectItem value="MEDIUM">Medium</SelectItem>
-                <SelectItem value="HARD">Hard</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Difficulty</Label>
+              <Select value={difficulty} onValueChange={setDifficulty}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EASY">Easy</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="HARD">Hard</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Reference material (optional)</Label>
+              <input
+                ref={referenceInputRef}
+                type="file"
+                accept="application/pdf,image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(e) => setReferenceFile(e.target.files?.[0] || null)}
+              />
+              {referenceFile ? (
+                <div className="flex items-center justify-between rounded-md border border-border/80 bg-background px-3 py-2 text-sm">
+                  <span className="truncate text-foreground">{referenceFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReferenceFile(null);
+                      if (referenceInputRef.current) referenceInputRef.current.value = '';
+                    }}
+                    className="ml-2 shrink-0 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start text-muted-foreground"
+                  onClick={() => referenceInputRef.current?.click()}
+                >
+                  <Paperclip className="mr-2 h-4 w-4" />
+                  Upload a past quiz or reference file
+                </Button>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Optional — a past quiz or study material the AI can match style from. It won't be copied verbatim.
+              </p>
+            </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsQuizDialogOpen(false)}>Cancel</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsQuizDialogOpen(false);
+                setReferenceFile(null);
+              }}
+            >
+              Cancel
+            </Button>
             <Button onClick={handleGenerateQuiz} disabled={generatingQuiz}>
               {generatingQuiz ? 'Generating...' : 'Generate'}
             </Button>

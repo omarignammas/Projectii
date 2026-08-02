@@ -148,6 +148,11 @@
 
   html {
     scroll-behavior: smooth;
+    /* Matches body's background — when the authenticated app applies a CSS
+       `zoom` on body (AppShell), the zoomed box renders shorter than the real
+       viewport, and this is what shows through the leftover gap at the bottom
+       instead of an unstyled white sliver. */
+    @apply bg-background;
   }
 
   body {

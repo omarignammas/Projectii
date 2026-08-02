@@ -88,7 +88,7 @@ export const AdminPage = () => {
   }));
 
   return (
-    <div className="container mx-auto px-4 py-10">
+    <div className="w-full px-4 py-10">
       <PageHero icon={ShieldCheck} title="Admin" subtitle="Who's using Projectii." />
 
       {loading ? (

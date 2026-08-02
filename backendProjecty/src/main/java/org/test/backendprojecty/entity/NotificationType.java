@@ -12,5 +12,6 @@ public enum NotificationType {
     SUMMARY_READY,
     QUIZ_READY,
     SUMMARY_SHARED,
-    QUIZ_SHARED
+    QUIZ_SHARED,
+    TASK_PLAN_READY
 }

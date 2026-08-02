@@ -58,7 +58,7 @@ export const SummariesPage = () => {
   };
 
   return (
-    <div className="accent-blue container mx-auto px-4 py-10">
+    <div className="accent-blue w-full px-4 py-10">
       <PageHero
         icon={Sparkles}
         title="Summaries"

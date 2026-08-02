@@ -6,10 +6,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.test.backendprojecty.dtos.request.InviteMemberRequest;
 import org.test.backendprojecty.dtos.request.PaginationRequest;
 import org.test.backendprojecty.dtos.request.QuizAttemptRequest;
-import org.test.backendprojecty.dtos.request.QuizDifficultyRequest;
+import org.test.backendprojecty.entity.QuizDifficulty;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.dtos.response.QuizAttemptResponse;
 import org.test.backendprojecty.dtos.response.QuizResponse;
@@ -24,12 +25,13 @@ public class QuizController {
 
     private final QuizService quizService;
 
-    @PostMapping("${BaseUrl}/course-summaries/{summaryId}/quizzes")
+    @PostMapping(value = "${BaseUrl}/course-summaries/{summaryId}/quizzes", consumes = "multipart/form-data")
     public ResponseEntity<QuizResponse> requestQuizGeneration(
             @PathVariable Long summaryId,
-            @Valid @RequestBody QuizDifficultyRequest request
+            @RequestParam QuizDifficulty difficulty,
+            @RequestParam(required = false) MultipartFile referenceFile
     ) {
-        QuizResponse response = quizService.requestQuizGeneration(summaryId, request.getDifficulty());
+        QuizResponse response = quizService.requestQuizGeneration(summaryId, difficulty, referenceFile);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -58,6 +60,12 @@ public class QuizController {
     public ResponseEntity<Void> deleteQuiz(@PathVariable Long quizId) {
         quizService.deleteQuiz(quizId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("${BaseUrl}/quizzes/{quizId}/cancel")
+    public ResponseEntity<Void> cancel(@PathVariable Long quizId) {
+        quizService.cancel(quizId);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("${BaseUrl}/quizzes/{quizId}/attempts")

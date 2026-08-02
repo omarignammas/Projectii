@@ -46,9 +46,9 @@ export const SummaryQuizShowcase = () => {
   const scored = stage === 'scored';
 
   return (
-    <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr]">
+    <div className="grid grid-cols-1 gap-6">
       {/* Left: source upload → AI summary + diagram */}
-      <div className="rounded-xl border border-border/80 bg-card p-5">
+      <div className="h-[300px] rounded-xl border border-border/80 bg-card p-5">
         <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
           <Sparkles className={`h-4 w-4 text-primary ${extracting ? 'animate-pulse' : ''}`} />
           AI course summary
@@ -106,7 +106,7 @@ export const SummaryQuizShowcase = () => {
       </div>
 
       {/* Right: quiz generated from the same summary, auto-graded */}
-      <div className="relative flex flex-col justify-center rounded-xl border border-border/80 bg-card p-5">
+      <div className="relative flex h-[300px] flex-col rounded-xl border border-border/80 bg-card p-5">
         <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
           <ListChecks className="h-4 w-4 text-primary" />
           Quiz · Medium

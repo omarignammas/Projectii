@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { LogOut, UserCircle, Settings, Menu, ShieldCheck } from 'lucide-react';
 import Sidebar from './Sidebar';
@@ -24,7 +24,23 @@ export const AppShell = () => {
   const { toast } = useToast();
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const { notifications, unreadCount, markRead, markAllRead } = useNotificationSocket(!!user);
+  const { notifications, unreadCount, markRead, markAllRead, refresh } = useNotificationSocket(!!user);
+
+  // Scoped to the body (not just this subtree) so Radix portals — dialogs,
+  // dropdowns, selects — zoom along with the rest of the app; reverted on
+  // unmount so the landing page and auth pages stay at 100%.
+  //
+  // Width needs no help: a zoomed block's percentage-based `width: auto`
+  // already resolves against the un-zoomed viewport, so body naturally still
+  // spans edge-to-edge. Height does need compensating below, since `h-screen`
+  // is a viewport-unit literal (100vh), not a parent-relative percentage, and
+  // viewport units don't get that same automatic adjustment.
+  useEffect(() => {
+    document.body.style.zoom = '90%';
+    return () => {
+      document.body.style.zoom = '';
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -41,7 +57,7 @@ export const AppShell = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex overflow-hidden bg-background" style={{ height: 'calc(100vh / 0.9)' }}>
       <Sidebar
         onQuickAdd={() => setIsQuickAddOpen(true)}
         mobileOpen={isMobileNavOpen}
@@ -68,6 +84,7 @@ export const AppShell = () => {
               unreadCount={unreadCount}
               markRead={markRead}
               markAllRead={markAllRead}
+              refresh={refresh}
             />
           )}
 

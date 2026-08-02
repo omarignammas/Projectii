@@ -99,7 +99,7 @@ export const DashboardPage = () => {
   }, [tasks, activeTab]);
 
   return (
-    <div className="accent-amber container mx-auto px-4 py-10">
+    <div className="accent-amber w-full px-4 py-10">
       <PageHero icon={Home} title="Dashboard" subtitle="Everything due, at a glance." />
 
       <div className="mb-6">

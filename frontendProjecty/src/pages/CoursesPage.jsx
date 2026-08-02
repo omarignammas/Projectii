@@ -177,10 +177,10 @@ export const CoursesPage = () => {
   };
 
   return (
-    <div className="accent-purple container mx-auto px-4 py-10">
+    <div className="accent-purple w-full px-4 py-10">
       <PageHero
         icon={GraduationCap}
-        title="My Courses"
+        title="My Projects Portfolio"
         subtitle="Manage your courses and tasks"
         action={
           <div className="flex gap-2">

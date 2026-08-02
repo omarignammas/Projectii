@@ -22,6 +22,11 @@ export const friendService = {
     return response.data;
   },
 
+  async searchUsers(query) {
+    const response = await api.get('/friends/search', { params: { q: query } });
+    return response.data;
+  },
+
   async getIncomingRequests() {
     const response = await api.get('/friends/requests/incoming');
     return response.data;

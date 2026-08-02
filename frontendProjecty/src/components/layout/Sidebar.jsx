@@ -23,7 +23,7 @@ import {
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: Home },
   { to: '/tasks', label: 'Tasks', icon: ListTodo },
-  { to: '/courses', label: 'Courses', icon: LayoutGrid },
+  { to: '/courses', label: 'Portfolio', icon: LayoutGrid },
   { to: '/calendar', label: 'Calendar', icon: CalendarDays },
   { to: '/focus-rooms', label: 'Focus Rooms', icon: Timer },
   { to: '/friends', label: 'Friends', icon: Users },

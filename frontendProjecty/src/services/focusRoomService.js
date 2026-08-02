@@ -28,6 +28,10 @@ export const focusRoomService = {
     return response.data;
   },
 
+  async declineInvite(code) {
+    await api.post(`/focus-rooms/${code}/decline`);
+  },
+
   async rematchRoom(code) {
     const response = await api.post(`/focus-rooms/${code}/rematch`);
     return response.data;

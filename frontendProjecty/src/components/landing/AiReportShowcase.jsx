@@ -49,9 +49,9 @@ export const AiReportShowcase = () => {
   const ready = stage === 'ready';
 
   return (
-    <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 lg:grid-cols-[1fr_1.1fr]">
+    <div className="grid grid-cols-1 gap-6">
       {/* Left: live session mini mock — chat, then notes */}
-      <div className="rounded-xl border border-border/80 bg-card p-5">
+      <div className="h-[300px] rounded-xl border border-border/80 bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-foreground">Deep Work Sprint</p>
@@ -106,7 +106,7 @@ export const AiReportShowcase = () => {
       </div>
 
       {/* Right: AI report card — mirrors the real in-app "AI session report" card */}
-      <div className="relative flex flex-col justify-center rounded-xl border border-border/80 bg-card p-5">
+      <div className="relative flex h-[300px] flex-col rounded-xl border border-border/80 bg-card p-5">
         <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
           <Sparkles className={`h-4 w-4 text-primary ${generating ? 'animate-pulse' : ''}`} />
           AI session report

@@ -50,7 +50,7 @@ export const TasksPage = () => {
   }, [tasks, courseFilter, priorityFilter, statusFilter, view]);
 
   return (
-    <div className="accent-amber container mx-auto px-4 py-10">
+    <div className="accent-amber w-full px-4 py-10">
       <PageHero
         icon={ListTodo}
         title="Tasks"

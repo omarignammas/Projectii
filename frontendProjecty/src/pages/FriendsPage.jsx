@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Users, UserPlus, Check, X, Clock, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,10 +23,14 @@ export const FriendsPage = () => {
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState('');
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
+  const searchBoxRef = useRef(null);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -50,20 +54,65 @@ export const FriendsPage = () => {
     fetchAll();
   }, []);
 
-  const handleSendRequest = async (e) => {
-    e.preventDefault();
+  // Live typeahead — debounced so we're not firing a search request on every keystroke.
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setSuggestions([]);
+      setSearching(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setSearching(true);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const results = await friendService.searchUsers(query.trim());
+        if (!cancelled) setSuggestions(results);
+      } catch {
+        if (!cancelled) setSuggestions([]);
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [query]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const sendTo = async (emailToSend) => {
     setError('');
     setSending(true);
     try {
-      await friendService.sendRequest(email);
-      toast({ title: 'Friend request sent', description: `We let ${email} know.` });
-      setEmail('');
+      await friendService.sendRequest(emailToSend);
+      toast({ title: 'Friend request sent', description: `We let ${emailToSend} know.` });
+      setQuery('');
+      setSuggestions([]);
+      setShowSuggestions(false);
       fetchAll();
     } catch (err) {
       setError(err.response?.data?.message || 'Could not send that request');
     } finally {
       setSending(false);
     }
+  };
+
+  const handleSendRequest = (e) => {
+    e.preventDefault();
+    sendTo(query.trim());
+  };
+
+  const handleSelectSuggestion = (user) => {
+    sendTo(user.email);
   };
 
   const handleAccept = async (requestId) => {
@@ -96,7 +145,7 @@ export const FriendsPage = () => {
   };
 
   return (
-    <div className="accent-blue container mx-auto px-4 py-10">
+    <div className="accent-blue w-full px-4 py-10">
       <PageHero icon={Users} title="Friends" subtitle="Connect with people to invite into your Focus Rooms." />
 
       <div className="mb-8 rounded-xl border border-border/80 bg-card p-5">
@@ -105,15 +154,47 @@ export const FriendsPage = () => {
           add a friend
         </p>
         <form onSubmit={handleSendRequest} className="flex flex-col gap-3 sm:flex-row">
-          <Input
-            type="email"
-            placeholder="friend@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="flex-1"
-          />
-          <Button type="submit" disabled={sending || !email.trim()}>
+          <div ref={searchBoxRef} className="relative flex-1">
+            <Input
+              type="text"
+              placeholder="Search by name or email..."
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              autoComplete="off"
+              required
+            />
+            {showSuggestions && query.trim().length >= 2 && (
+              <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-border/80 bg-card shadow-lg">
+                {searching ? (
+                  <p className="px-3 py-2.5 text-sm text-muted-foreground">Searching...</p>
+                ) : suggestions.length === 0 ? (
+                  <p className="px-3 py-2.5 text-sm text-muted-foreground">
+                    No matches — try their exact email and hit Send.
+                  </p>
+                ) : (
+                  suggestions.map((s) => (
+                    <button
+                      type="button"
+                      key={s.userId}
+                      onClick={() => handleSelectSuggestion(s)}
+                      className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-accent"
+                    >
+                      <Avatar name={s.displayName} avatarUrl={s.avatarUrl} size="sm" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">{s.displayName}</p>
+                        <p className="truncate text-xs text-muted-foreground">{s.email}</p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+          <Button type="submit" disabled={sending || !query.trim()}>
             {sending ? 'Sending...' : 'Send Request'}
           </Button>
         </form>

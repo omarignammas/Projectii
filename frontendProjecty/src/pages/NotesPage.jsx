@@ -61,7 +61,7 @@ export const NotesPage = () => {
   const handleNoteDeleted = () => fetchData();
 
   return (
-    <div className="accent-purple container mx-auto px-4 py-10">
+    <div className="accent-purple w-full px-4 py-10">
       <PageHero
         icon={NotebookText}
         title="Notes"

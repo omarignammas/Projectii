@@ -10,5 +10,6 @@ import java.util.Optional;
 @Repository
 public interface FocusRoomParticipantRepository extends JpaRepository<FocusRoomParticipant, Long> {
     Optional<FocusRoomParticipant> findByRoomIdAndUserId(Long roomId, Long userId);
+    Optional<FocusRoomParticipant> findByRoomCodeAndUserId(String roomCode, Long userId);
     List<FocusRoomParticipant> findByRoomIdOrderByCreatedAtAsc(Long roomId);
 }

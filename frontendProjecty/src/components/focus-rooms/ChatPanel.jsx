@@ -1,10 +1,25 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Lock, Hand, Send, MessageSquare, Smile } from 'lucide-react';
+import { Lock, Hand, Send, MessageSquare, Smile, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import Avatar from '../shared/Avatar';
 import ChatModeSelect from './ChatModeSelect';
+import markdownComponents from '../shared/markdownComponents';
+
+// Slightly denser than the shared page-level defaults — this renders inside a chat bubble, not a full page.
+const aiMarkdownComponents = {
+  ...markdownComponents,
+  p: (props) => <p className="mb-1.5 text-sm leading-relaxed last:mb-0" {...props} />,
+  ul: (props) => <ul className="mb-1.5 ml-4 list-disc space-y-0.5 text-sm last:mb-0" {...props} />,
+  ol: (props) => <ol className="mb-1.5 ml-4 list-decimal space-y-0.5 text-sm last:mb-0" {...props} />,
+  li: (props) => <li className="text-sm" {...props} />,
+  h1: (props) => <p className="mb-1 text-sm font-bold last:mb-0" {...props} />,
+  h2: (props) => <p className="mb-1 text-sm font-bold last:mb-0" {...props} />,
+  h3: (props) => <p className="mb-1 text-sm font-semibold last:mb-0" {...props} />,
+};
 
 const isEmojiOnly = (text) => {
   const stripped = text.replace(/\s+/g, '');
@@ -85,9 +100,27 @@ export const ChatPanel = ({
             );
           }
 
+          if (m.type === 'AI') {
+            return (
+              <div key={m.id} className="mt-3 flex items-end gap-2">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <Sparkles className="h-3.5 w-3.5" />
+                </div>
+                <div className="flex max-w-[85%] flex-col items-start">
+                  <span className="mb-0.5 px-1 text-xs font-medium text-primary">AI</span>
+                  <div className="animate-in fade-in slide-in-from-bottom-1 rounded-2xl rounded-bl-sm border border-primary/30 bg-primary/5 px-3 py-2 text-foreground shadow-sm">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={aiMarkdownComponents}>
+                      {m.body}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           const isMine = Boolean(currentUserEmail) && m.senderEmail === currentUserEmail;
           const prev = messages[i - 1];
-          const isGroupStart = !prev || prev.type === 'SYSTEM' || prev.senderEmail !== m.senderEmail;
+          const isGroupStart = !prev || prev.type === 'SYSTEM' || prev.type === 'AI' || prev.senderEmail !== m.senderEmail;
           const time = m.createdAt ? format(new Date(m.createdAt), 'HH:mm') : '';
 
           return (
@@ -137,7 +170,7 @@ export const ChatPanel = ({
         <Input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder={fullyLocked ? 'Locked during focus…' : emojiOnly ? 'Emoji only 👍🔥🎉' : 'Type a message'}
+          placeholder={fullyLocked ? 'Locked during focus…' : emojiOnly ? 'Emoji only 👍🔥🎉' : 'Type a message, or @ai <question>'}
           disabled={fullyLocked}
         />
         <Button type="submit" size="icon" disabled={fullyLocked || !draftIsValid} className="shrink-0">

@@ -12,9 +12,11 @@ import org.test.backendprojecty.dtos.response.NotificationResponse;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.entity.Notification;
 import org.test.backendprojecty.entity.NotificationType;
+import org.test.backendprojecty.entity.ParticipantStatus;
 import org.test.backendprojecty.entity.User;
 import org.test.backendprojecty.exception.BadRequestException;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
+import org.test.backendprojecty.repository.FocusRoomParticipantRepository;
 import org.test.backendprojecty.repository.NotificationRepository;
 import org.test.backendprojecty.security.CurrentUserProvider;
 
@@ -26,18 +28,26 @@ import java.util.stream.Collectors;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final FocusRoomParticipantRepository focusRoomParticipantRepository;
     private final CurrentUserProvider currentUserProvider;
     private final SimpMessagingTemplate messagingTemplate;
 
     /** Called by other services (friend requests, room invites) — recipient is explicit, not "current user". */
     @Transactional
     public void notify(User recipient, NotificationType type, String title, String body, String link) {
+        notify(recipient, type, title, body, link, null);
+    }
+
+    /** Same as above, plus a resourceId (e.g. a Focus Room code) an actionable notification refers to. */
+    @Transactional
+    public void notify(User recipient, NotificationType type, String title, String body, String link, String actionResourceId) {
         Notification notification = Notification.builder()
                 .recipient(recipient)
                 .type(type)
                 .title(title)
                 .body(body)
                 .link(link)
+                .actionResourceId(actionResourceId)
                 .build();
         notification = notificationRepository.save(notification);
 
@@ -98,8 +108,23 @@ public class NotificationService {
                 .title(notification.getTitle())
                 .body(notification.getBody())
                 .link(notification.getLink())
+                .actionResourceId(notification.getActionResourceId())
+                .actionable(isStillActionable(notification))
                 .read(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .build();
+    }
+
+    // Computed fresh on every read rather than stored — this way accepting/declining
+    // an invite anywhere (the room page, another device) makes stale buttons vanish
+    // automatically instead of needing to reach back into this notification's own row.
+    private boolean isStillActionable(Notification notification) {
+        if (notification.getType() != NotificationType.FOCUS_ROOM_INVITE || notification.getActionResourceId() == null) {
+            return false;
+        }
+        return focusRoomParticipantRepository
+                .findByRoomCodeAndUserId(notification.getActionResourceId(), notification.getRecipient().getId())
+                .map(p -> p.getStatus() == ParticipantStatus.INVITED)
+                .orElse(false);
     }
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Backpack, GraduationCap, User, Gauge, RefreshCw, Users, UserPlus, X, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Backpack, GraduationCap, User, Gauge, RefreshCw, Users, UserPlus, X, Check, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { CircularProgress } from '../components/shared/CircularProgress';
 import { Card, CardContent } from '../components/ui/card';
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import CourseBackpack from '../components/courses/CourseBackpack';
 import CreateTaskDialog from '../components/tasks/CreateTaskDialog';
 import EditCourseDialog from '../components/courses/EditCourseDialog';
+import AiTaskPlanDialog from '../components/courses/AiTaskPlanDialog';
 import FriendPicker from '../components/focus-rooms/FriendPicker';
 import Avatar from '../components/shared/Avatar';
 import courseService from '../services/courseService';
@@ -30,6 +31,7 @@ export const CourseDetailPage = () => {
   const [loading, setLoading] = useState(true);
 
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [isAiPlanOpen, setIsAiPlanOpen] = useState(false);
   const [isEditCourseOpen, setIsEditCourseOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteUserIds, setInviteUserIds] = useState([]);
@@ -164,7 +166,7 @@ export const CourseDetailPage = () => {
   const involvedUserIds = members.map((m) => m.userId);
 
   return (
-    <div className="accent-purple container mx-auto px-4 py-8">
+    <div className="accent-purple w-full px-4 py-8">
       <Button
         variant="ghost"
         onClick={() => navigate('/courses')}
@@ -318,10 +320,16 @@ export const CourseDetailPage = () => {
           backpack
         </p>
         {course.isOwner && (
-          <Button onClick={() => setIsCreateTaskOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Task
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsAiPlanOpen(true)}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              AI Plan
+            </Button>
+            <Button onClick={() => setIsCreateTaskOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Task
+            </Button>
+          </div>
         )}
       </div>
 
@@ -340,6 +348,13 @@ export const CourseDetailPage = () => {
             open={isCreateTaskOpen}
             onOpenChange={setIsCreateTaskOpen}
             onTaskCreated={handleTaskCreated}
+          />
+
+          <AiTaskPlanDialog
+            courseId={courseId}
+            open={isAiPlanOpen}
+            onOpenChange={setIsAiPlanOpen}
+            onPlanApplied={fetchCourseData}
           />
 
           <EditCourseDialog

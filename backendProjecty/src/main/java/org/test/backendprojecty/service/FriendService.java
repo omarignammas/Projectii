@@ -2,6 +2,7 @@ package org.test.backendprojecty.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,6 +123,17 @@ public class FriendService {
                 .collect(Collectors.toList());
 
         return new PagingResult<>(content, page.getTotalPages(), page.getTotalElements(), page.getSize(), page.getNumber(), page.isEmpty());
+    }
+
+    @Transactional(readOnly = true)
+    public List<FriendResponse> searchUsers(String query) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        if (query == null || query.trim().length() < 2) {
+            return List.of();
+        }
+
+        return userRepository.searchByEmailOrName(query.trim(), currentUser.getId(), PageRequest.of(0, 8))
+                .stream().map(this::toFriendResponse).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

@@ -3,6 +3,7 @@ import Avatar from '../shared/Avatar';
 
 const STATUS_LABEL = {
   INVITED: 'invited, not joined',
+  DECLINED: 'declined',
   JOINED: 'ready',
   FOCUSING: 'focusing',
   ON_BREAK: 'on break',
@@ -18,6 +19,8 @@ const dotClass = (participant, roomStatus) => {
       return 'bg-[hsl(var(--status-in-progress-fg))]';
     case 'QUIT':
       return 'bg-muted-foreground/50';
+    case 'DECLINED':
+      return 'bg-destructive/50';
     case 'INVITED':
       return 'bg-muted-foreground/30';
     case 'JOINED':

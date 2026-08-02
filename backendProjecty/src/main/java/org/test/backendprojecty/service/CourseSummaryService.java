@@ -40,6 +40,11 @@ public class CourseSummaryService {
 
     private static final Pattern MERMAID_FENCE = Pattern.compile("```mermaid\\s*\\n(.*?)```", Pattern.DOTALL);
 
+    // Uncapped PDF text was the main driver of slow/timed-out generations — a large
+    // PDF's raw extracted text could balloon the Groq prompt to hundreds of thousands
+    // of characters. This is plenty of material for a solid summary either way.
+    private static final int MAX_EXTRACTED_TEXT_CHARS = 20_000;
+
     private final CourseSummaryRepository courseSummaryRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
@@ -75,7 +80,7 @@ public class CourseSummaryService {
         String extractedText = null;
         if (stored.fileType() == SourceFileType.PDF) {
             try {
-                extractedText = pdfTextExtractionService.extractText(file.getBytes());
+                extractedText = truncate(pdfTextExtractionService.extractText(file.getBytes()));
             } catch (IOException e) {
                 throw new UncheckedIOException("Failed to read uploaded PDF", e);
             }
@@ -114,6 +119,10 @@ public class CourseSummaryService {
                 raw = llmApiClient.generateFromImage(buildImagePrompt(), imageBytes, guessMimeType(summary.getSourceFileUrl()));
             }
 
+            if (courseSummaryRepository.findStatusById(summary.getId()) == GenerationStatus.CANCELLED) {
+                return;
+            }
+
             Matcher matcher = MERMAID_FENCE.matcher(raw);
             if (matcher.find()) {
                 summary.setDiagramMermaid(matcher.group(1).trim());
@@ -130,9 +139,26 @@ public class CourseSummaryService {
                     "/summaries/" + summary.getId());
         } catch (Exception e) {
             log.warn("Failed to generate summary {}: {}", summary.getId(), e.getMessage());
+            if (courseSummaryRepository.findStatusById(summary.getId()) == GenerationStatus.CANCELLED) {
+                return;
+            }
             summary.setStatus(GenerationStatus.FAILED);
             courseSummaryRepository.save(summary);
         }
+    }
+
+    @Transactional
+    public void cancel(Long summaryId) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        CourseSummary summary = courseSummaryRepository.findByIdAndUserId(summaryId, currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Summary not found with id: " + summaryId));
+
+        if (summary.getStatus() != GenerationStatus.PENDING) {
+            throw new BadRequestException("Only a generation in progress can be cancelled");
+        }
+
+        summary.setStatus(GenerationStatus.CANCELLED);
+        courseSummaryRepository.save(summary);
     }
 
     @Transactional
@@ -141,8 +167,8 @@ public class CourseSummaryService {
         CourseSummary summary = courseSummaryRepository.findByIdAndUserId(summaryId, currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Summary not found with id: " + summaryId));
 
-        if (summary.getStatus() != GenerationStatus.FAILED) {
-            throw new BadRequestException("Only a failed summary can be retried");
+        if (summary.getStatus() != GenerationStatus.FAILED && summary.getStatus() != GenerationStatus.CANCELLED) {
+            throw new BadRequestException("Only a failed or cancelled summary can be retried");
         }
 
         summary.setStatus(GenerationStatus.PENDING);
@@ -295,6 +321,13 @@ public class CourseSummaryService {
                 maps the main concepts and how they relate. If the image doesn't contain \
                 meaningful course material, say so briefly and skip the diagram.
                 """;
+    }
+
+    private String truncate(String text) {
+        if (text.length() <= MAX_EXTRACTED_TEXT_CHARS) {
+            return text;
+        }
+        return text.substring(0, MAX_EXTRACTED_TEXT_CHARS) + "\n\n[truncated — document continues beyond this excerpt]";
     }
 
     private byte[] readStoredFile(String url) {

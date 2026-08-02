@@ -9,53 +9,58 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-// Always generated from an existing CourseSummary's material — no separate
-// upload/extraction path for quizzes, so the "owner" here may differ from
-// summary.getUser() when a friend with shared access generates their own.
+// An AI-proposed task breakdown for a course, generated from an uploaded
+// reference file and/or free-text context. Deliberately NOT applied to real
+// Task rows until the user reviews and confirms — proposedTasksJson holds the
+// draft; confirmPlan() is the only path that ever creates real Tasks from it.
 @Entity
-@Table(name = "quizzes")
+@Table(name = "task_plan_generations")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class Quiz {
+public class TaskPlanGeneration {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "summary_id", nullable = false)
-    private CourseSummary summary;
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
-    private String title;
+    private String sourceFileUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private QuizDifficulty difficulty;
+    private SourceFileType sourceFileType;
+
+    @Column(columnDefinition = "TEXT")
+    private String extractedText;
+
+    private LocalDate targetDate;
+
+    @Column(columnDefinition = "TEXT")
+    private String additionalContext;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private GenerationStatus status = GenerationStatus.PENDING;
 
-    // Optional student-provided reference (e.g. a past quiz) the LLM draws style/
-    // inspiration from — never the sole source material, the summary always is.
-    private String referenceFileUrl;
-
-    @Enumerated(EnumType.STRING)
-    private SourceFileType referenceFileType;
-
     @Column(columnDefinition = "TEXT")
-    private String referenceText;
+    private String proposedTasksJson;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean applied = false;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

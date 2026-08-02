@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format, addDays, subDays, startOfWeek, endOfWeek } from 'date-fns';
-import { Flame, CheckCircle2, Tag, Timer, ListTodo, LayoutGrid, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Flame, CheckCircle2, Timer, ListTodo, BarChart3 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/card';
 import taskService from '../services/taskService';
 import courseService from '../services/courseService';
 import focusRoomService from '../services/focusRoomService';
-import { isOverdueTask } from '../lib/taskDates';
 import TrendAreaChart from '../components/charts/TrendAreaChart';
-import CategoryBarChart from '../components/charts/CategoryBarChart';
 import ActivityHeatmap from '../components/charts/ActivityHeatmap';
 import StreakBarChart from '../components/charts/StreakBarChart';
 import { CircularProgress } from '../components/shared/CircularProgress';
@@ -72,23 +70,44 @@ export const StatsPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
+    let cancelled = false;
+
+    const fetchStats = async (showSpinner) => {
+      if (showSpinner) setLoading(true);
       try {
         const [tasksResult, coursesResult, focusRoomsResult] = await Promise.all([
           taskService.getAllTasks({ size: 500 }),
           courseService.getAllCourses({ size: 100 }),
           focusRoomService.getAllRooms({ size: 100 }),
         ]);
+        if (cancelled) return;
         setTasks(tasksResult.content);
         setCourses(coursesResult.content);
         setFocusRooms(focusRoomsResult.content || []);
       } catch (error) {
         console.error('Error fetching stats data:', error);
       } finally {
-        setLoading(false);
+        if (!cancelled && showSpinner) setLoading(false);
       }
-    })();
+    };
+
+    fetchStats(true);
+
+    // Completing a task elsewhere and switching back to an already-open Stats
+    // tab doesn't remount this page, so these numbers would otherwise sit
+    // stale until a full navigation away and back — refresh quietly instead.
+    const onFocus = () => fetchStats(false);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchStats(false);
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, []);
 
   const stats = useMemo(() => {
@@ -106,14 +125,6 @@ export const StatsPage = () => {
       .map((t) => t.completedAt.slice(0, 10));
     const streak = computeStreak(completedDayStrings);
 
-    const courseCounts = {};
-    tasks.forEach((t) => {
-      if (t.courseTitle) {
-        courseCounts[t.courseTitle] = (courseCounts[t.courseTitle] || 0) + 1;
-      }
-    });
-    const mostUsedCourse = Object.entries(courseCounts).sort((a, b) => b[1] - a[1])[0];
-
     const weekStartDate = startOfWeek(new Date());
     const focusRoomMinutesThisWeek = focusRooms.reduce((total, room) => {
       if (room.status !== 'COMPLETED' || new Date(room.updatedAt) < weekStartDate) return total;
@@ -126,11 +137,8 @@ export const StatsPage = () => {
       dueThisWeekCount: dueThisWeek.length,
       completedThisWeekCount: completedThisWeek.length,
       streak,
-      mostUsedCourse: mostUsedCourse ? mostUsedCourse[0] : '—',
-      mostUsedCourseCount: mostUsedCourse ? mostUsedCourse[1] : 0,
       totalTasks: tasks.length,
       totalCompleted: tasks.filter((t) => t.completed).length,
-      overdueCount: tasks.filter(isOverdueTask).length,
       focusRoomMinutesThisWeek,
     };
   }, [tasks, focusRooms, user?.email]);
@@ -258,19 +266,26 @@ export const StatsPage = () => {
 
   const tasksByPriority = useMemo(() => {
     const order = [
-      { key: 'HIGH', label: 'High', colorVar: '--priority-high-fg' },
-      { key: 'MEDIUM', label: 'Medium', colorVar: '--priority-medium-fg' },
-      { key: 'LOW', label: 'Low', colorVar: '--priority-low-fg' },
+      { key: 'HIGH', label: 'High', color: 'orange' },
+      { key: 'MEDIUM', label: 'Medium', color: 'blue' },
+      { key: 'LOW', label: 'Low', color: 'green' },
     ];
-    return order.map((o) => ({
-      label: o.label,
-      colorVar: o.colorVar,
-      value: tasks.filter((t) => t.priority === o.key).length,
-    }));
+    return order.map((o) => {
+      const priorityTasks = tasks.filter((t) => t.priority === o.key);
+      const completed = priorityTasks.filter((t) => t.completed).length;
+      return {
+        key: o.key,
+        label: o.label,
+        color: o.color,
+        percentage: priorityTasks.length > 0 ? Math.round((completed / priorityTasks.length) * 100) : 0,
+        completed,
+        total: priorityTasks.length,
+      };
+    });
   }, [tasks]);
 
   return (
-    <div className="accent-teal container mx-auto px-4 py-10">
+    <div className="accent-teal w-full px-4 py-10">
       <PageHero icon={BarChart3} title="Stats" subtitle="How the term's actually going." />
 
       {loading ? (
@@ -293,13 +308,6 @@ export const StatsPage = () => {
               percentage={stats.totalTasks > 0 ? Math.round((stats.totalCompleted / stats.totalTasks) * 100) : 0}
               color="blue"
             />
-            <StatTile icon={LayoutGrid} label="Courses" value={courses.length} color="purple" />
-            <StatTile
-              icon={AlertTriangle}
-              label="Overdue"
-              value={stats.overdueCount}
-              color={stats.overdueCount > 0 ? 'orange' : 'green'}
-            />
             <StatTile
               icon={CheckCircle2}
               label="Weekly completion rate"
@@ -314,13 +322,6 @@ export const StatsPage = () => {
               value={`${stats.streak} ${stats.streak === 1 ? 'day' : 'days'}`}
               percentage={Math.min(100, Math.round((stats.streak / 7) * 100))}
               color="orange"
-            />
-            <StatTile
-              icon={Tag}
-              label="Most-used course"
-              value={stats.mostUsedCourse}
-              sub={stats.mostUsedCourseCount ? `${stats.mostUsedCourseCount} tasks` : undefined}
-              color="blue"
             />
             <StatTile
               icon={Timer}
@@ -388,7 +389,21 @@ export const StatsPage = () => {
             <Card className="border-border/80 bg-card">
               <CardContent className="p-5">
                 <p className="section-header mb-4">tasks by priority</p>
-                <CategoryBarChart data={tasksByPriority} />
+                {tasksByPriority.every((p) => p.total === 0) ? (
+                  <p className="text-sm text-muted-foreground">No tasks with a priority set yet.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-4">
+                    {tasksByPriority.map((p) => (
+                      <div key={p.key} className="flex flex-col items-center gap-2 text-center">
+                        <CircularProgress percentage={p.percentage} size={80} strokeWidth={7} color={p.color} />
+                        <div>
+                          <p className="text-xs font-medium text-foreground">{p.label}</p>
+                          <p className="text-xs text-muted-foreground">{p.completed}/{p.total} done</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

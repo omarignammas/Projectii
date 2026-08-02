@@ -23,7 +23,7 @@ import {
 import { CircularProgress } from '../shared/CircularProgress';
 import Avatar from '../shared/Avatar';
 
-const TAB_ORDER = ['dashboard', 'tasks', 'courses', 'calendar', 'focus'];
+const TAB_ORDER = ['focus', 'dashboard', 'tasks', 'courses', 'calendar'];
 const AUTO_ADVANCE_MS = 5200;
 
 // Mirrors Sidebar.jsx's NAV_ITEMS exactly — only the ones with a tabKey have
@@ -116,7 +116,7 @@ const CoursesScreen = () => (
   <div className="p-4 sm:p-5">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <p className="text-base font-bold text-foreground">My Courses</p>
+        <p className="text-base font-bold text-foreground">My Projects Portfolio</p>
         <p className="text-xs text-muted-foreground">Manage your courses and tasks</p>
       </div>
       <span className="flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
@@ -323,9 +323,12 @@ const CalendarScreen = () => (
 const CHAT_SCRIPT = [
   { id: 1, type: 'system', body: 'Round 2 starting' },
   { id: 2, type: 'chat', sender: 'Mira', body: 'locked in', icon: Lock },
-  { id: 3, type: 'system', body: 'Deniz raised a hand', icon: Hand },
-  { id: 4, type: 'chat', sender: 'You', body: 'almost done with Q3' },
-  { id: 5, type: 'system', body: 'Mira · focusing' },
+  { id: 3, type: 'chat', sender: 'Deniz', body: 'same, starting problem set 2' },
+  { id: 4, type: 'system', body: 'Deniz raised a hand', icon: Hand },
+  { id: 5, type: 'chat', sender: 'You', body: 'almost done with Q3' },
+  { id: 6, type: 'chat', sender: 'Mira', body: "nice, I'll share my notes after" },
+  { id: 7, type: 'chat', sender: 'Deniz', body: 'appreciate it 🙏' },
+  { id: 8, type: 'system', body: 'Mira · focusing' },
 ];
 
 const FocusChatPanel = () => {
@@ -344,7 +347,7 @@ const FocusChatPanel = () => {
         <MessageSquare className="h-3.5 w-3.5 text-primary" />
         room chat
       </p>
-      <div className="min-h-[110px] flex-1 space-y-1.5">
+      <div className="min-h-[190px] flex-1 space-y-1.5">
         {CHAT_SCRIPT.slice(0, visibleCount).map((m) => (
           <div key={m.id} className="animate-in fade-in slide-in-from-bottom-1 duration-500">
             {m.type === 'system' ? (
@@ -429,7 +432,7 @@ const SCREENS = {
 };
 
 export const ScreensShowcase = () => {
-  const [active, setActive] = useState('dashboard');
+  const [active, setActive] = useState(TAB_ORDER[0]);
   const ActiveScreen = SCREENS[active];
 
   // Auto-plays through every tab on its own — a manual click just jumps

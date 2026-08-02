@@ -201,4 +201,31 @@ class FriendServiceTest {
 
         assertFalse(friendService.areFriends(1L, 2L));
     }
+
+    @Test
+    void searchUsers_ValidQuery_ReturnsMappedResults() {
+        when(userRepository.searchByEmailOrName(eq("bob"), eq(1L), any(Pageable.class))).thenReturn(List.of(bob));
+
+        List<FriendResponse> result = friendService.searchUsers("bob");
+
+        assertEquals(1, result.size());
+        assertEquals("bob@example.com", result.get(0).getEmail());
+        assertEquals(2L, result.get(0).getUserId());
+    }
+
+    @Test
+    void searchUsers_QueryTooShort_ReturnsEmptyWithoutQuerying() {
+        List<FriendResponse> result = friendService.searchUsers("b");
+
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void searchUsers_NullQuery_ReturnsEmpty() {
+        List<FriendResponse> result = friendService.searchUsers(null);
+
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(userRepository);
+    }
 }

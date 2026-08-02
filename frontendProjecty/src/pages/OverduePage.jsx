@@ -29,7 +29,7 @@ export const OverduePage = () => {
   const unscheduledTasks = useMemo(() => tasks.filter(isUnscheduledTask), [tasks]);
 
   return (
-    <div className="accent-coral container mx-auto px-4 py-10">
+    <div className="accent-coral w-full px-4 py-10">
       <PageHero
         icon={AlertTriangle}
         title="Overdue & Unscheduled"

@@ -38,9 +38,9 @@ const NAV_LINKS = [
   { href: '#how-it-works', label: 'Process' },
 ];
 
-// Kept to identical character length on purpose — the rotating swiper swaps these
-// in place, and same-length words mean the swap never looks lopsided mid-transition.
-const HERO_WORDS = ['spreadsheet', 'sticky note', 'index cards', 'messy notes', 'loose paper'];
+// Kept to close-to-identical character length on purpose — the rotating swiper swaps
+// these in place, and same-length words mean the swap never looks lopsided mid-transition.
+const HERO_AUDIENCE_WORDS = ['study groups', 'class cohorts', 'bootcamp crews', 'founder teams'];
 const WORKSPACE_WORDS = ['your terms', 'your rules', 'your speed', 'your plans'];
 
 const FEATURES = [
@@ -226,14 +226,14 @@ export const LandingPage = () => {
             </p>
 
             <h1 className="animate-in fade-in slide-in-from-bottom-3 text-balance text-4xl font-bold leading-tight text-foreground duration-700 [animation-delay:100ms] [animation-fill-mode:backwards] sm:text-5xl md:text-6xl">
-              Run your coursework without{' '}
+              The coworking layer for{' '}
               <span className="text-neon-blue">
-                the <RotatingWord words={HERO_WORDS} />.
+                <RotatingWord words={HERO_AUDIENCE_WORDS} />.
               </span>
             </h1>
 
             <p className="animate-in fade-in slide-in-from-bottom-3 mx-auto mt-6 max-w-xl text-balance text-sm uppercase tracking-wide text-muted-foreground duration-700 [animation-delay:200ms] [animation-fill-mode:backwards]">
-              No busywork, no fields you'll never use — courses, tasks, and the status of both.
+              Not a to-do app for one — wired into your syllabus or your playlist, built to grow together.
             </p>
 
             <div className="animate-in fade-in slide-in-from-bottom-3 mx-auto mt-8 max-w-lg rounded-lg border border-border/80 bg-card px-5 py-3 duration-700 [animation-delay:300ms] [animation-fill-mode:backwards]">
@@ -299,7 +299,7 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* AI: chats, notes, and sessions summarized into a report */}
+      {/* AI: sessions and course material, both turned into something useful */}
       <section id="ai-reports" className="border-t border-border/80 py-20">
         <div className="container mx-auto px-4">
           <Reveal className="mb-10 text-center">
@@ -308,12 +308,25 @@ export const LandingPage = () => {
               Your session, <span className="text-primary">summarized for you</span>
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-              Chat, take notes, focus together — when the session ends, AI turns it all into one clean report for everyone in the room.
+              Chat, take notes, focus together, or upload a course file — AI turns any of it into a clean report,
+              summary, diagram, or quiz.
             </p>
           </Reveal>
-          <Reveal delay={100}>
-            <AiReportShowcase />
-          </Reveal>
+
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 lg:grid-cols-2">
+            <Reveal delay={100}>
+              <p className="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-muted-foreground lg:text-left">
+                Deep Work Sprint
+              </p>
+              <AiReportShowcase />
+            </Reveal>
+            <Reveal delay={200}>
+              <p className="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-muted-foreground lg:text-left">
+                Course Summaries
+              </p>
+              <SummaryQuizShowcase />
+            </Reveal>
+          </div>
         </div>
       </section>
 

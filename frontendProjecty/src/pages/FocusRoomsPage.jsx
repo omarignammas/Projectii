@@ -94,7 +94,7 @@ export const FocusRoomsPage = () => {
   }, [rooms]);
 
   return (
-    <div className="accent-teal container mx-auto px-4 py-10">
+    <div className="accent-teal w-full px-4 py-10">
       <PageHero
         icon={Timer}
         title="Focus Rooms"

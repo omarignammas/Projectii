@@ -13,6 +13,7 @@ import org.test.backendprojecty.dtos.request.PaginationRequest;
 import org.test.backendprojecty.dtos.response.FocusRoomResponse;
 import org.test.backendprojecty.dtos.response.PagingResult;
 import org.test.backendprojecty.entity.*;
+import org.test.backendprojecty.event.AiChatRequestedEvent;
 import org.test.backendprojecty.event.FocusRoomCompletedEvent;
 import org.test.backendprojecty.exception.BadRequestException;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
@@ -138,7 +139,8 @@ public class FocusRoomService {
         notificationService.notify(invitee, NotificationType.FOCUS_ROOM_INVITE,
                 "Focus Room invite",
                 displayName(host) + " invited you to \"" + room.getName() + "\"" + when,
-                "/focus-rooms/" + room.getCode());
+                "/focus-rooms/" + room.getCode(),
+                room.getCode());
     }
 
     @Transactional(readOnly = true)
@@ -181,6 +183,7 @@ public class FocusRoomService {
         FocusRoomParticipant participant = participantRepository
                 .findByRoomIdAndUserId(room.getId(), currentUser.getId())
                 .orElse(null);
+        boolean wasInvited = participant != null && participant.getStatus() == ParticipantStatus.INVITED;
 
         boolean isFreshJoin;
         if (participant == null) {
@@ -194,7 +197,9 @@ public class FocusRoomService {
                     .joinedAt(LocalDateTime.now())
                     .build();
             isFreshJoin = true;
-        } else if (participant.getStatus() == ParticipantStatus.INVITED || participant.getStatus() == ParticipantStatus.QUIT) {
+        } else if (participant.getStatus() == ParticipantStatus.INVITED
+                || participant.getStatus() == ParticipantStatus.QUIT
+                || participant.getStatus() == ParticipantStatus.DECLINED) {
             if (room.isLocked() && participant.getStatus() != ParticipantStatus.INVITED) {
                 throw new BadRequestException("This room is locked by the host");
             }
@@ -209,9 +214,38 @@ public class FocusRoomService {
 
         if (isFreshJoin) {
             postSystemMessage(room, displayName(currentUser) + " joined");
+            if (wasInvited && !room.getHost().getId().equals(currentUser.getId())) {
+                notificationService.notify(room.getHost(), NotificationType.FOCUS_ROOM_INVITE,
+                        "Invite accepted",
+                        displayName(currentUser) + " joined \"" + room.getName() + "\"",
+                        "/focus-rooms/" + room.getCode(),
+                        room.getCode());
+            }
         }
 
         return buildSnapshotAndBroadcast(room);
+    }
+
+    @Transactional
+    public void declineInvite(String code) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        FocusRoom room = findRoomOrThrow(code);
+        FocusRoomParticipant participant = participantRepository
+                .findByRoomIdAndUserId(room.getId(), currentUser.getId())
+                .orElseThrow(() -> new BadRequestException("You don't have a pending invite to this room"));
+
+        if (participant.getStatus() != ParticipantStatus.INVITED) {
+            throw new BadRequestException("This invite is no longer pending");
+        }
+
+        participant.setStatus(ParticipantStatus.DECLINED);
+        participantRepository.save(participant);
+
+        notificationService.notify(room.getHost(), NotificationType.FOCUS_ROOM_INVITE,
+                "Invite declined",
+                displayName(currentUser) + " declined your invite to \"" + room.getName() + "\"",
+                "/focus-rooms/" + room.getCode(),
+                room.getCode());
     }
 
     @Transactional
@@ -391,7 +425,8 @@ public class FocusRoomService {
 
         if (participant.getStatus() == ParticipantStatus.QUIT
                 || participant.getStatus() == ParticipantStatus.COMPLETED
-                || participant.getStatus() == ParticipantStatus.INVITED) {
+                || participant.getStatus() == ParticipantStatus.INVITED
+                || participant.getStatus() == ParticipantStatus.DECLINED) {
             throw new BadRequestException("You can't raise your hand right now");
         }
 
@@ -411,7 +446,9 @@ public class FocusRoomService {
                 .findByRoomIdAndUserId(room.getId(), currentUser.getId())
                 .orElseThrow(() -> new BadRequestException("You are not in this room"));
 
-        if (participant.getStatus() == ParticipantStatus.QUIT || participant.getStatus() == ParticipantStatus.INVITED) {
+        if (participant.getStatus() == ParticipantStatus.QUIT
+                || participant.getStatus() == ParticipantStatus.INVITED
+                || participant.getStatus() == ParticipantStatus.DECLINED) {
             throw new BadRequestException("You can't chat in this room");
         }
 
@@ -432,8 +469,32 @@ public class FocusRoomService {
                 .body(body)
                 .build();
         messageRepository.save(message);
-
         buildSnapshotAndBroadcast(room);
+
+        String aiQuestion = extractAiMention(body);
+        if (aiQuestion != null) {
+            postSystemMessage(room, "🤖 AI is thinking…");
+            buildSnapshotAndBroadcast(room);
+            eventPublisher.publishEvent(new AiChatRequestedEvent(room.getId(), aiQuestion));
+        }
+    }
+
+    // Re-fetches and re-broadcasts a room's current snapshot — used by
+    // FocusRoomAiChatService once it's saved the AI's reply, since that
+    // happens in a separate async transaction with its own FocusRoom instance.
+    @Transactional
+    public void broadcastSnapshot(String code) {
+        FocusRoom room = findRoomOrThrow(code);
+        buildSnapshotAndBroadcast(room);
+    }
+
+    private static String extractAiMention(String body) {
+        String trimmed = body.trim();
+        if (!trimmed.regionMatches(true, 0, "@ai", 0, 3)) {
+            return null;
+        }
+        String question = trimmed.substring(3).trim();
+        return question.isEmpty() ? null : question;
     }
 
     @Transactional

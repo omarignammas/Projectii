@@ -61,6 +61,12 @@ public class CourseSummaryController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{summaryId}/cancel")
+    public ResponseEntity<Void> cancel(@PathVariable Long summaryId) {
+        courseSummaryService.cancel(summaryId);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/{summaryId}/share")
     public ResponseEntity<Void> shareSummary(
             @PathVariable Long summaryId,

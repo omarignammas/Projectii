@@ -38,6 +38,10 @@ export const courseSummaryService = {
     await api.post(`/course-summaries/${summaryId}/retry`);
   },
 
+  async cancel(summaryId) {
+    await api.post(`/course-summaries/${summaryId}/cancel`);
+  },
+
   async shareSummary(summaryId, userId) {
     await api.post(`/course-summaries/${summaryId}/share`, { userId });
   },

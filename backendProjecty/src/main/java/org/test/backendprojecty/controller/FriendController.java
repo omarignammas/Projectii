@@ -39,6 +39,11 @@ public class FriendController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<FriendResponse>> searchUsers(@RequestParam String q) {
+        return ResponseEntity.ok(friendService.searchUsers(q));
+    }
+
     @PostMapping("/requests")
     public ResponseEntity<FriendRequestResponse> sendRequest(@Valid @RequestBody SendFriendRequestRequest request) {
         FriendRequestResponse response = friendService.sendRequest(request);

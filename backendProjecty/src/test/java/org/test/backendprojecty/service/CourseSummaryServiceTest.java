@@ -221,11 +221,59 @@ class CourseSummaryServiceTest {
         verifyNoInteractions(llmApiClient, notificationService);
     }
 
+    @Test
+    void onSummaryUploaded_CancelledWhileInFlight_DoesNotOverwriteWithReady() {
+        summary.setExtractedText("material");
+        when(courseSummaryRepository.findById(100L)).thenReturn(Optional.of(summary));
+        when(llmApiClient.generateText(anyString())).thenReturn("## Key Points\n- a\n- b");
+        when(courseSummaryRepository.findStatusById(100L)).thenReturn(GenerationStatus.CANCELLED);
+
+        service.onSummaryUploaded(new CourseSummaryUploadedEvent(100L));
+
+        verify(courseSummaryRepository, never()).save(any());
+        verifyNoInteractions(notificationService);
+    }
+
+    // --- cancel ---
+
+    @Test
+    void cancel_Pending_SetsCancelled() {
+        when(currentUserProvider.getCurrentUser()).thenReturn(owner);
+        when(courseSummaryRepository.findByIdAndUserId(100L, 1L)).thenReturn(Optional.of(summary));
+
+        service.cancel(100L);
+
+        assertEquals(GenerationStatus.CANCELLED, summary.getStatus());
+        verify(courseSummaryRepository).save(summary);
+    }
+
+    @Test
+    void cancel_NotPending_ThrowsBadRequest() {
+        summary.setStatus(GenerationStatus.READY);
+        when(currentUserProvider.getCurrentUser()).thenReturn(owner);
+        when(courseSummaryRepository.findByIdAndUserId(100L, 1L)).thenReturn(Optional.of(summary));
+
+        assertThrows(BadRequestException.class, () -> service.cancel(100L));
+        verify(courseSummaryRepository, never()).save(any());
+    }
+
     // --- retry ---
 
     @Test
     void retry_Failed_ResetsToPendingAndRepublishes() {
         summary.setStatus(GenerationStatus.FAILED);
+        when(currentUserProvider.getCurrentUser()).thenReturn(owner);
+        when(courseSummaryRepository.findByIdAndUserId(100L, 1L)).thenReturn(Optional.of(summary));
+
+        service.retry(100L);
+
+        assertEquals(GenerationStatus.PENDING, summary.getStatus());
+        verify(eventPublisher).publishEvent(new CourseSummaryUploadedEvent(100L));
+    }
+
+    @Test
+    void retry_Cancelled_ResetsToPendingAndRepublishes() {
+        summary.setStatus(GenerationStatus.CANCELLED);
         when(currentUserProvider.getCurrentUser()).thenReturn(owner);
         when(courseSummaryRepository.findByIdAndUserId(100L, 1L)).thenReturn(Optional.of(summary));
 

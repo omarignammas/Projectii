@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.test.backendprojecty.dtos.request.FocusRoomRequest;
 import org.test.backendprojecty.dtos.response.FocusRoomResponse;
 import org.test.backendprojecty.entity.*;
+import org.test.backendprojecty.event.AiChatRequestedEvent;
 import org.test.backendprojecty.exception.BadRequestException;
 import org.test.backendprojecty.exception.ResourceNotFoundException;
 import org.test.backendprojecty.mapper.FocusRoomMapper;
@@ -167,7 +168,7 @@ class FocusRoomServiceTest {
         assertEquals(guest, invited.getUser());
         assertEquals(ParticipantStatus.INVITED, invited.getStatus());
 
-        verify(notificationService).notify(eq(guest), eq(NotificationType.FOCUS_ROOM_INVITE), anyString(), anyString(), startsWith("/focus-rooms/"));
+        verify(notificationService).notify(eq(guest), eq(NotificationType.FOCUS_ROOM_INVITE), anyString(), anyString(), startsWith("/focus-rooms/"), anyString());
     }
 
     @Test
@@ -236,7 +237,7 @@ class FocusRoomServiceTest {
         focusRoomService.inviteToRoom("ABC-123", guest.getId());
 
         verify(participantRepository, never()).save(any());
-        verify(notificationService, never()).notify(any(), any(), anyString(), anyString(), anyString());
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -275,6 +276,23 @@ class FocusRoomServiceTest {
         assertEquals(FocusMessageType.SYSTEM, msgCaptor.getValue().getType());
 
         verify(messagingTemplate).convertAndSend(eq("/topic/rooms/ABC-123"), any(FocusRoomResponse.class));
+        // No prior INVITED row — nobody specifically invited this join, so the host isn't notified.
+        verifyNoInteractions(notificationService);
+    }
+
+    @Test
+    void joinRoom_RespondingToInvite_NotifiesHost() {
+        FocusRoom room = lobbyRoom();
+        FocusRoomParticipant invited = participant(room, guest, ParticipantStatus.INVITED);
+        when(currentUserProvider.getCurrentUser()).thenReturn(guest);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.of(invited));
+
+        focusRoomService.joinRoom("ABC-123");
+
+        assertEquals(ParticipantStatus.JOINED, invited.getStatus());
+        verify(notificationService).notify(eq(host), eq(NotificationType.FOCUS_ROOM_INVITE),
+                anyString(), contains("joined"), startsWith("/focus-rooms/"), eq("ABC-123"));
     }
 
     @Test
@@ -309,6 +327,44 @@ class FocusRoomServiceTest {
         when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
 
         assertThrows(BadRequestException.class, () -> focusRoomService.joinRoom("ABC-123"));
+    }
+
+    @Test
+    void declineInvite_Success_MarksDeclinedAndNotifiesHost() {
+        FocusRoom room = lobbyRoom();
+        FocusRoomParticipant invited = participant(room, guest, ParticipantStatus.INVITED);
+        when(currentUserProvider.getCurrentUser()).thenReturn(guest);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.of(invited));
+
+        focusRoomService.declineInvite("ABC-123");
+
+        assertEquals(ParticipantStatus.DECLINED, invited.getStatus());
+        verify(notificationService).notify(eq(host), eq(NotificationType.FOCUS_ROOM_INVITE),
+                anyString(), contains("declined"), startsWith("/focus-rooms/"), eq("ABC-123"));
+    }
+
+    @Test
+    void declineInvite_NoInvite_ThrowsBadRequest() {
+        FocusRoom room = lobbyRoom();
+        when(currentUserProvider.getCurrentUser()).thenReturn(guest);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.empty());
+
+        assertThrows(BadRequestException.class, () -> focusRoomService.declineInvite("ABC-123"));
+        verifyNoInteractions(notificationService);
+    }
+
+    @Test
+    void declineInvite_AlreadyJoined_ThrowsBadRequest() {
+        FocusRoom room = lobbyRoom();
+        FocusRoomParticipant joined = participant(room, guest, ParticipantStatus.JOINED);
+        when(currentUserProvider.getCurrentUser()).thenReturn(guest);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.of(joined));
+
+        assertThrows(BadRequestException.class, () -> focusRoomService.declineInvite("ABC-123"));
+        verifyNoInteractions(notificationService);
     }
 
     @Test
@@ -615,6 +671,77 @@ class FocusRoomServiceTest {
         focusRoomService.postChatMessage("ABC-123", guest, "👍🔥");
 
         verify(messageRepository).save(any(FocusRoomMessage.class));
+    }
+
+    @Test
+    void postChatMessage_AiMention_PostsThinkingMessageAndPublishesEvent() {
+        FocusRoom room = lobbyRoom();
+        FocusRoomParticipant guestParticipant = participant(room, guest, ParticipantStatus.JOINED);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.of(guestParticipant));
+
+        focusRoomService.postChatMessage("ABC-123", guest, "@ai what is osmosis?");
+
+        ArgumentCaptor<FocusRoomMessage> msgCaptor = ArgumentCaptor.forClass(FocusRoomMessage.class);
+        verify(messageRepository, times(2)).save(msgCaptor.capture());
+        assertEquals(FocusMessageType.CHAT, msgCaptor.getAllValues().get(0).getType());
+        assertEquals(FocusMessageType.SYSTEM, msgCaptor.getAllValues().get(1).getType());
+        assertTrue(msgCaptor.getAllValues().get(1).getBody().contains("thinking"));
+
+        ArgumentCaptor<AiChatRequestedEvent> eventCaptor = ArgumentCaptor.forClass(AiChatRequestedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertEquals(10L, eventCaptor.getValue().roomId());
+        assertEquals("what is osmosis?", eventCaptor.getValue().question());
+    }
+
+    @Test
+    void postChatMessage_AiMentionCaseInsensitiveNoSpace_StillDetected() {
+        FocusRoom room = lobbyRoom();
+        FocusRoomParticipant guestParticipant = participant(room, guest, ParticipantStatus.JOINED);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.of(guestParticipant));
+
+        focusRoomService.postChatMessage("ABC-123", guest, "@AI  summarize chapter 4");
+
+        ArgumentCaptor<AiChatRequestedEvent> eventCaptor = ArgumentCaptor.forClass(AiChatRequestedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertEquals("summarize chapter 4", eventCaptor.getValue().question());
+    }
+
+    @Test
+    void postChatMessage_NoAiMention_DoesNotPublishEvent() {
+        FocusRoom room = lobbyRoom();
+        FocusRoomParticipant guestParticipant = participant(room, guest, ParticipantStatus.JOINED);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.of(guestParticipant));
+
+        focusRoomService.postChatMessage("ABC-123", guest, "just a normal message");
+
+        verify(messageRepository, times(1)).save(any(FocusRoomMessage.class));
+        verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
+    void postChatMessage_BareAiMentionNoQuestion_DoesNotPublishEvent() {
+        FocusRoom room = lobbyRoom();
+        FocusRoomParticipant guestParticipant = participant(room, guest, ParticipantStatus.JOINED);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId())).thenReturn(Optional.of(guestParticipant));
+
+        focusRoomService.postChatMessage("ABC-123", guest, "@ai");
+
+        verify(messageRepository, times(1)).save(any(FocusRoomMessage.class));
+        verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
+    void broadcastSnapshot_Success_RebroadcastsCurrentState() {
+        FocusRoom room = lobbyRoom();
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+
+        focusRoomService.broadcastSnapshot("ABC-123");
+
+        verify(messagingTemplate).convertAndSend(eq("/topic/rooms/ABC-123"), any(FocusRoomResponse.class));
     }
 
     @Test

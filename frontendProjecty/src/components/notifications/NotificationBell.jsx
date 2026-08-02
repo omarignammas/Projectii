@@ -1,21 +1,48 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
+import focusRoomService from '../../services/focusRoomService';
+import { useToast } from '../../hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 
-export const NotificationBell = ({ notifications, unreadCount, markRead, markAllRead }) => {
+export const NotificationBell = ({ notifications, unreadCount, markRead, markAllRead, refresh }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [resolvingId, setResolvingId] = useState(null);
 
   const handleClick = (notification) => {
     if (!notification.read) markRead(notification.id);
     if (notification.link) navigate(notification.link);
+  };
+
+  const respondToInvite = async (event, notification, action) => {
+    event.stopPropagation();
+    setResolvingId(notification.id);
+    try {
+      if (action === 'join') {
+        await focusRoomService.joinRoom(notification.actionResourceId);
+      } else {
+        await focusRoomService.declineInvite(notification.actionResourceId);
+      }
+      if (!notification.read) await markRead(notification.id);
+      await refresh();
+      if (action === 'join') navigate(`/focus-rooms/${notification.actionResourceId}`);
+    } catch (error) {
+      toast({
+        title: 'Focus Room',
+        description: error.response?.data?.message || `Couldn't ${action === 'join' ? 'join' : 'decline'} that invite`,
+        variant: 'destructive',
+      });
+    } finally {
+      setResolvingId(null);
+    }
   };
 
   return (
@@ -49,17 +76,39 @@ export const NotificationBell = ({ notifications, unreadCount, markRead, markAll
         ) : (
           <div className="max-h-80 overflow-y-auto">
             {notifications.map((n) => (
-              <DropdownMenuItem
+              <div
                 key={n.id}
                 onClick={() => handleClick(n)}
-                className="flex-col items-start gap-0.5 whitespace-normal py-2"
+                className="flex cursor-pointer flex-col items-start gap-1 rounded-sm px-2 py-2 text-sm transition-colors hover:bg-accent"
               >
                 <div className="flex w-full items-center gap-1.5">
                   {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
                   <span className="font-medium text-foreground">{n.title}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">{n.body}</p>
-              </DropdownMenuItem>
+
+                {n.actionable && (
+                  <div className="mt-1 flex gap-2">
+                    <Button
+                      size="sm"
+                      className="h-7 px-3 text-xs"
+                      disabled={resolvingId === n.id}
+                      onClick={(e) => respondToInvite(e, n, 'join')}
+                    >
+                      {resolvingId === n.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Join'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-3 text-xs"
+                      disabled={resolvingId === n.id}
+                      onClick={(e) => respondToInvite(e, n, 'decline')}
+                    >
+                      Decline
+                    </Button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}

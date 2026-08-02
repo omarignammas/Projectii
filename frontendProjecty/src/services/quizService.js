@@ -1,8 +1,14 @@
 import api from './api';
 
 export const quizService = {
-  async requestQuizGeneration(summaryId, difficulty) {
-    const response = await api.post(`/course-summaries/${summaryId}/quizzes`, { difficulty });
+  async requestQuizGeneration(summaryId, difficulty, referenceFile) {
+    const formData = new FormData();
+    formData.append('difficulty', difficulty);
+    if (referenceFile) formData.append('referenceFile', referenceFile);
+
+    const response = await api.post(`/course-summaries/${summaryId}/quizzes`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 
@@ -30,6 +36,10 @@ export const quizService = {
 
   async deleteQuiz(quizId) {
     await api.delete(`/quizzes/${quizId}`);
+  },
+
+  async cancel(quizId) {
+    await api.post(`/quizzes/${quizId}/cancel`);
   },
 
   async submitAttempt(quizId, answers) {

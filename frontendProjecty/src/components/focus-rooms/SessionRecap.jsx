@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { CheckCircle2, DoorOpen, Copy, RotateCcw, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useToast } from '../../hooks/use-toast';
 import focusRoomService from '../../services/focusRoomService';
+import markdownComponents from '../shared/markdownComponents';
 
 export const SessionRecap = ({ room, userEmail }) => {
   const [rematching, setRematching] = useState(false);
@@ -132,7 +135,9 @@ export const SessionRecap = ({ room, userEmail }) => {
               Generating your recap…
             </div>
           ) : report?.status === 'READY' ? (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{report.content}</p>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {report.content}
+            </ReactMarkdown>
           ) : (
             <p className="text-sm text-muted-foreground">Couldn't generate a report for this session.</p>
           )}
