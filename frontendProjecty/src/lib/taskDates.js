@@ -19,6 +19,22 @@ export const monthEndStr = () => format(endOfMonth(new Date()), 'yyyy-MM-dd');
 export const isOverdueTask = (task) =>
   !task.completed && !!task.dueDate && task.dueDate < todayStr();
 
+// Hours elapsed since the due date's day actually ended (a task due "today"
+// isn't overdue until tomorrow — see isOverdueTask — so the gap is measured
+// from midnight of the day after dueDate, not from dueDate's own midnight).
+export const overdueHours = (task) => {
+  if (!isOverdueTask(task)) return 0;
+  const deadlineEnd = addDays(parseLocalDate(task.dueDate), 1);
+  return Math.max(0, Math.floor((Date.now() - deadlineEnd.getTime()) / (1000 * 60 * 60)));
+};
+
+export const formatOverdueGap = (hours) => {
+  if (hours < 24) return `${hours}h overdue`;
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  return remHours > 0 ? `${days}d ${remHours}h overdue` : `${days}d overdue`;
+};
+
 export const isUnscheduledTask = (task) => !task.completed && !task.dueDate;
 
 export const PRIORITY_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };

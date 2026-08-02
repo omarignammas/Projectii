@@ -473,7 +473,7 @@ public class FocusRoomService {
 
         String aiQuestion = extractAiMention(body);
         if (aiQuestion != null) {
-            postSystemMessage(room, "🤖 AI is thinking…");
+            postSystemMessage(room, "AI is thinking…");
             buildSnapshotAndBroadcast(room);
             eventPublisher.publishEvent(new AiChatRequestedEvent(room.getId(), aiQuestion));
         }

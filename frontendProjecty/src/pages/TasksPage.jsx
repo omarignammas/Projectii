@@ -11,7 +11,7 @@ export const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('list');
+  const [view, setView] = useState('board');
   const [courseFilter, setCourseFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');

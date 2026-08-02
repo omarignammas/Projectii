@@ -7,7 +7,7 @@ import { Badge } from '../ui/badge';
 import EditTaskDialog from './EditTaskDialog';
 import taskService from '../../services/taskService';
 import { format } from 'date-fns';
-import { isOverdueTask, parseLocalDate } from '../../lib/taskDates';
+import { isOverdueTask, parseLocalDate, overdueHours, formatOverdueGap } from '../../lib/taskDates';
 import { useAuth } from '../../hooks/useAuth';
 import {
   AlertDialog,
@@ -50,7 +50,7 @@ export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
       const updatedTask = await taskService.markTaskCompleted(task.id);
       onTaskUpdated(updatedTask);
       toast({
-        title: "✅ Task updated",
+        title: "Task updated",
         description: `"${task.title}" has been successfully updated.`,
         variant: "default",
       })
@@ -64,14 +64,14 @@ export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
       await taskService.deleteTask(task.id);
       onTaskDeleted(task.id);
       toast({
-        title: "✅ Task deleted",
+        title: "Task deleted",
         description: `"${task.title}" has been successfully deleted.`,
         variant: "default",
       })
     } catch (error) {
       console.error('Error deleting task:', error);
       toast({
-        title: "❌ Error",
+        title: "Error",
         description: "Failed to delete task",
         variant: "destructive",
        })
@@ -178,6 +178,12 @@ export const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }) => {
                 <Badge variant="outline" className={`border-transparent font-medium ${statusPill.className}`}>
                   {statusPill.label}
                 </Badge>
+
+                {isOverdue && (
+                  <span className="text-xs font-medium text-[hsl(var(--status-overdue-fg))]">
+                    {formatOverdueGap(overdueHours(task))}
+                  </span>
+                )}
 
                 {task.priority && (
                   <Badge variant="outline" className={`border-transparent font-medium ${PRIORITY_PILL[task.priority]}`}>

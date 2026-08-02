@@ -27,11 +27,11 @@ export const NoteCard = ({ note, onDelete }) => {
     setDeleting(true);
     try {
       await noteService.deleteNote(note.id);
-      toast({ title: '✅ Note deleted', variant: 'default' });
+      toast({ title: 'Note deleted', variant: 'default' });
       onDelete(note.id);
     } catch (error) {
       console.error('Error deleting note:', error);
-      toast({ title: '❌ Error', description: 'Failed to delete note', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to delete note', variant: 'destructive' });
     } finally {
       setDeleting(false);
     }

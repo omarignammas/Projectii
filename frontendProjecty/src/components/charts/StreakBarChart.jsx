@@ -6,7 +6,15 @@ import { format } from 'date-fns';
 // (or yesterday, if today's still open) is highlighted as the current streak.
 export const StreakBarChart = ({ data }) => (
   <div className="flex h-[140px] items-end gap-1 pt-8">
-    {data.map((day) => (
+    {data.map((day, i) => {
+      const isFirst = i === 0;
+      const isLast = i === data.length - 1;
+      const tooltipPositionClass = isFirst
+        ? 'left-0 translate-x-0'
+        : isLast
+          ? 'left-auto right-0 translate-x-0'
+          : 'left-1/2 -translate-x-1/2';
+      return (
       <div key={day.date} className="group relative h-full flex-1">
         <div
           tabIndex={0}
@@ -22,7 +30,8 @@ export const StreakBarChart = ({ data }) => (
           style={{ height: day.active ? '100%' : '10%' }}
         />
 
-        <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-border/80 bg-popover px-3 py-2 text-center opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+        <div className={`pointer-events-none absolute bottom-full ${tooltipPositionClass} z-10 mb-2 whitespace-nowrap rounded-lg border border-border/80 bg-popover px-3 py-2 text-center opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100`}>
+
           <p className="text-sm font-bold text-foreground">
             {day.tasksCompleted} task{day.tasksCompleted === 1 ? '' : 's'}
             {day.hoursWorked > 0 ? ` · ${day.hoursWorked}h worked` : ''}
@@ -39,7 +48,8 @@ export const StreakBarChart = ({ data }) => (
           )}
         </div>
       </div>
-    ))}
+      );
+    })}
   </div>
 );
 

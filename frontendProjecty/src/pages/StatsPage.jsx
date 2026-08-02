@@ -285,7 +285,7 @@ export const StatsPage = () => {
   }, [tasks]);
 
   return (
-    <div className="accent-teal w-full px-4 py-10">
+    <div className="accent-teal w-full overflow-x-hidden px-4 py-10">
       <PageHero icon={BarChart3} title="Stats" subtitle="How the term's actually going." />
 
       {loading ? (

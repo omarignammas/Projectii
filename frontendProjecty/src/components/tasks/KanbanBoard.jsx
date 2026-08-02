@@ -5,7 +5,7 @@ import { isOverdueTask } from '../../lib/taskDates';
 
 const COLUMNS = [
   { key: 'todo', label: 'to do', filter: (t) => !t.completed && !isOverdueTask(t) },
-  { key: 'overdue', label: 'overdue', filter: (t) => !t.completed && isOverdueTask(t) },
+  { key: 'in-progress', label: 'in progress', filter: (t) => !t.completed && isOverdueTask(t) },
   { key: 'done', label: 'done', filter: (t) => t.completed },
 ];
 
@@ -34,7 +34,7 @@ export const KanbanBoard = ({ tasks, onTaskUpdated, onTaskDeleted }) => {
     <div>
       <p className="mb-3 text-xs text-muted-foreground">
         Drag a card into <span className="font-medium text-foreground">Done</span> to complete it, or back out to reopen it.
-        To Do vs Overdue is based on due date.
+        To Do vs In Progress is based on due date — a task moves to In Progress once its deadline has passed.
       </p>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {COLUMNS.map((col) => {

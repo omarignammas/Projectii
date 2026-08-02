@@ -51,7 +51,7 @@ export const CourseCard = ({ course, onDelete }) => {
       await courseService.deleteCourse(course.id)
 
       toast({
-        title: "✅ Course deleted",
+        title: "Course deleted",
         description: `"${course.title}" has been successfully deleted.`,
         variant: "default",
       })
@@ -62,7 +62,7 @@ export const CourseCard = ({ course, onDelete }) => {
       console.error('Error deleting course:', error)
 
       toast({
-        title: "❌ Error",
+        title: "Error",
         description: error.response?.data?.message || "Failed to delete course. Please try again.",
         variant: "destructive",
       })

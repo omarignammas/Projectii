@@ -36,6 +36,14 @@ export const ActivityHeatmap = ({ data }) => {
           const showMonth = month !== lastMonth;
           if (showMonth) lastMonth = month;
 
+          const isFirstWeek = wi === 0;
+          const isLastWeek = wi === weeks.length - 1;
+          const tooltipPositionClass = isFirstWeek
+            ? 'left-0 translate-x-0'
+            : isLastWeek
+              ? 'left-auto right-0 translate-x-0'
+              : 'left-1/2 -translate-x-1/2';
+
           return (
             <div key={wi} className="flex flex-col gap-1">
               <p className="h-3 text-[9px] leading-3 text-muted-foreground">{showMonth ? month : ''}</p>
@@ -56,7 +64,7 @@ export const ActivityHeatmap = ({ data }) => {
                     }`}
                   />
                   {!day.isFuture && (
-                    <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-border/80 bg-popover px-2.5 py-1.5 text-center opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+                    <div className={`pointer-events-none absolute bottom-full ${tooltipPositionClass} z-10 mb-2 whitespace-nowrap rounded-lg border border-border/80 bg-popover px-2.5 py-1.5 text-center opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100`}>
                       <p className="text-sm font-bold text-foreground">
                         {day.count} task{day.count === 1 ? '' : 's'}
                       </p>

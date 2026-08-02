@@ -1,6 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck, Loader2 } from 'lucide-react';
+import {
+  Bell,
+  CheckCheck,
+  Loader2,
+  UserPlus,
+  UserCheck,
+  Users,
+  GraduationCap,
+  Flame,
+  ListTodo,
+  FileText,
+  Sparkles,
+  HelpCircle,
+  MailPlus,
+  ClipboardList,
+} from 'lucide-react';
 import { Button } from '../ui/button';
 import focusRoomService from '../../services/focusRoomService';
 import { useToast } from '../../hooks/use-toast';
@@ -11,6 +26,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+
+const NOTIFICATION_ICONS = {
+  FRIEND_REQUEST_RECEIVED: UserPlus,
+  FRIEND_REQUEST_ACCEPTED: UserCheck,
+  FOCUS_ROOM_INVITE: Users,
+  COURSE_COMPLETED: GraduationCap,
+  STREAK_MILESTONE: Flame,
+  TASK_REMINDER: ListTodo,
+  FOCUS_ROOM_REPORT_READY: FileText,
+  COURSE_INVITE: MailPlus,
+  SUMMARY_READY: FileText,
+  QUIZ_READY: HelpCircle,
+  SUMMARY_SHARED: FileText,
+  QUIZ_SHARED: HelpCircle,
+  TASK_PLAN_READY: ClipboardList,
+};
 
 export const NotificationBell = ({ notifications, unreadCount, markRead, markAllRead, refresh }) => {
   const navigate = useNavigate();
@@ -75,41 +106,49 @@ export const NotificationBell = ({ notifications, unreadCount, markRead, markAll
           <p className="px-2 py-6 text-center text-sm text-muted-foreground">You're all caught up.</p>
         ) : (
           <div className="max-h-80 overflow-y-auto">
-            {notifications.map((n) => (
+            {notifications.map((n) => {
+              const Icon = NOTIFICATION_ICONS[n.type] || Sparkles;
+              return (
               <div
                 key={n.id}
                 onClick={() => handleClick(n)}
-                className="flex cursor-pointer flex-col items-start gap-1 rounded-sm px-2 py-2 text-sm transition-colors hover:bg-accent"
+                className="flex cursor-pointer items-start gap-2.5 rounded-sm px-2 py-2 text-sm transition-colors hover:bg-accent"
               >
-                <div className="flex w-full items-center gap-1.5">
-                  {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
-                  <span className="font-medium text-foreground">{n.title}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{n.body}</p>
-
-                {n.actionable && (
-                  <div className="mt-1 flex gap-2">
-                    <Button
-                      size="sm"
-                      className="h-7 px-3 text-xs"
-                      disabled={resolvingId === n.id}
-                      onClick={(e) => respondToInvite(e, n, 'join')}
-                    >
-                      {resolvingId === n.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Join'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 px-3 text-xs"
-                      disabled={resolvingId === n.id}
-                      onClick={(e) => respondToInvite(e, n, 'decline')}
-                    >
-                      Decline
-                    </Button>
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Icon className="h-3.5 w-3.5" />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                  <div className="flex w-full items-center gap-1.5">
+                    {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
+                    <span className="font-medium text-foreground">{n.title}</span>
                   </div>
-                )}
+                  <p className="text-xs text-muted-foreground">{n.body}</p>
+
+                  {n.actionable && (
+                    <div className="mt-1 flex gap-2">
+                      <Button
+                        size="sm"
+                        className="h-7 px-3 text-xs"
+                        disabled={resolvingId === n.id}
+                        onClick={(e) => respondToInvite(e, n, 'join')}
+                      >
+                        {resolvingId === n.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Join'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-3 text-xs"
+                        disabled={resolvingId === n.id}
+                        onClick={(e) => respondToInvite(e, n, 'decline')}
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </DropdownMenuContent>

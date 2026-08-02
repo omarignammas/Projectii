@@ -94,7 +94,8 @@ export const ChatPanel = ({
         {messages.map((m, i) => {
           if (m.type === 'SYSTEM') {
             return (
-              <p key={m.id} className="py-1 text-center text-xs text-muted-foreground">
+              <p key={m.id} className="flex items-center justify-center gap-1 py-1 text-center text-xs text-muted-foreground">
+                {m.body === 'AI is thinking…' && <Sparkles className="h-3 w-3 shrink-0 text-primary" />}
                 {m.body}
               </p>
             );

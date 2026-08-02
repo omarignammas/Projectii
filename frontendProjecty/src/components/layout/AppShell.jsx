@@ -50,7 +50,7 @@ export const AppShell = () => {
   const handleQuickAddCreated = (task) => {
     setIsQuickAddOpen(false);
     toast({
-      title: '✅ Task created',
+      title: 'Task created',
       description: `"${task.title}" was added.`,
       variant: 'default',
     });

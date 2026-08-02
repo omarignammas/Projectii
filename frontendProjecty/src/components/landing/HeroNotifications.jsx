@@ -16,7 +16,6 @@ const CARDS = [
     title: 'Streak',
     body: "7 days running — don't break it today.",
     position: 'left-[calc(50%_-_660px)] top-[32%]',
-    iconClass: 'bg-[hsl(var(--priority-medium-bg))] text-[hsl(var(--priority-medium-fg))]',
     delay: 0,
   },
   {
@@ -25,7 +24,6 @@ const CARDS = [
     title: 'Friend request',
     body: 'Mira wants to add you as a friend.',
     position: 'right-[calc(50%_-_660px)] top-[40%]',
-    iconClass: 'bg-primary/10 text-primary',
     delay: 3300,
   },
   {
@@ -34,7 +32,6 @@ const CARDS = [
     title: 'Course completed',
     body: 'Data Structures & Algorithms — 100% done.',
     position: 'left-[calc(50%_-_660px)] top-[48%]',
-    iconClass: 'bg-[hsl(var(--status-done-bg))] text-[hsl(var(--status-done-fg))]',
     delay: 6600,
   },
   {
@@ -43,7 +40,6 @@ const CARDS = [
     title: 'Reminder',
     body: 'Problem Set 5 is due tomorrow.',
     position: 'right-[calc(50%_-_660px)] top-[56%]',
-    iconClass: 'bg-[hsl(var(--status-overdue-bg))] text-[hsl(var(--status-overdue-fg))]',
     delay: 9900,
   },
 ];
@@ -74,18 +70,18 @@ const HeroNotificationCard = ({ card }) => {
 
   return (
     <div
-      className={`absolute hidden w-64 rounded-2xl border border-border/80 bg-card/95 p-3 shadow-xl backdrop-blur-sm transition-all duration-500 min-[1400px]:block ${card.position} ${
+      className={`absolute hidden w-64 rounded-2xl rounded-bl-md bg-primary p-3 text-primary-foreground shadow-xl transition-all duration-500 dark:bg-white dark:text-slate-900 min-[1400px]:block ${card.position} ${
         visible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
       }`}
     >
       <div className="mb-1.5 flex items-center gap-1.5">
-        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${card.iconClass}`}>
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white/20 text-white dark:bg-slate-900/10 dark:text-slate-900">
           <card.icon className="h-3 w-3" />
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Projectii · now</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-primary-foreground/70 dark:text-slate-900/60">Projectii · now</span>
       </div>
-      <p className="text-sm font-semibold text-foreground">{card.title}</p>
-      <p className="text-xs text-muted-foreground">{card.body}</p>
+      <p className="text-sm font-semibold text-primary-foreground dark:text-slate-900">{card.title}</p>
+      <p className="text-xs text-primary-foreground/80 dark:text-slate-900/70">{card.body}</p>
     </div>
   );
 };
