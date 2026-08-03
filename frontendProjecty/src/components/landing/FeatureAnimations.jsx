@@ -1,108 +1,135 @@
 import { useState, useEffect } from 'react';
-import { Flame } from 'lucide-react';
-import { CircularProgress } from '../shared/CircularProgress';
+import { Sparkles, Layers, Check } from 'lucide-react';
 
-const TASKS = ['Lab Report 3', 'Reading Ch. 4', 'Problem Set 2'];
-
-// "Courses as containers" — tasks drop into the course one at a time, then reset.
-export const CoursesAnimation = () => {
-  const [count, setCount] = useState(0);
+// "AI that's in the room" — a @ai question, a thinking beat, then a reply bubble.
+export const AiChatAnimation = () => {
+  const [phase, setPhase] = useState(0); // 0: question only, 1: thinking, 2: reply
 
   useEffect(() => {
-    const interval = setInterval(() => setCount((c) => (c + 1) % (TASKS.length + 1)), 900);
-    return () => clearInterval(interval);
+    const durations = [700, 900, 1700];
+    let timeoutId;
+    const step = (p) => {
+      timeoutId = setTimeout(() => {
+        const next = (p + 1) % durations.length;
+        setPhase(next);
+        step(next);
+      }, durations[p]);
+    };
+    step(0);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   return (
-    <div className="mb-4 flex h-24 flex-col justify-center gap-1 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-2">
-      {TASKS.map((t, i) => (
-        <div
-          key={t}
-          className={`truncate rounded-md border border-border/60 bg-card px-2 py-1 text-[11px] text-foreground shadow-sm transition-all duration-500 ${
-            i < count ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0'
-          }`}
-        >
-          {t}
-        </div>
-      ))}
+    <div className="mb-4 flex h-24 flex-col justify-center gap-1.5 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-2.5">
+      <div className="flex justify-end">
+        <span className="rounded-2xl rounded-br-sm bg-primary px-2 py-1 text-[10px] text-primary-foreground">@ai summarize this</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <Sparkles className="h-2.5 w-2.5" />
+        </span>
+        {phase === 1 && <span className="text-[9px] text-muted-foreground">thinking…</span>}
+        {phase === 2 && (
+          <span className="animate-in fade-in rounded-2xl rounded-bl-sm border border-primary/30 bg-card px-2 py-1 text-[10px] text-foreground duration-300">
+            Here's the gist —
+          </span>
+        )}
+      </div>
     </div>
   );
 };
 
-// "Due dates that matter" — the badge flips itself to an overdue pulse, then back.
-export const DueDatesAnimation = () => {
-  const [overdue, setOverdue] = useState(false);
+// "Notes everyone builds on" — a shared topic thread, contributor lines stacking in.
+const NOTE_LINES = ['Divide step: O(log n)', 'Merge step: O(n) per level'];
+
+export const NotesAnimation = () => {
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => setOverdue((o) => !o), 1800);
+    const interval = setInterval(() => setCount((c) => (c + 1) % (NOTE_LINES.length + 1)), 1100);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="mb-4 flex h-24 flex-col justify-center rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
-      <div className="flex items-center justify-between rounded-md border border-border/60 bg-card px-2.5 py-2 shadow-sm">
-        <span className="truncate text-[11px] text-foreground">Lab Report 3</span>
+    <div className="mb-4 flex h-24 flex-col justify-center gap-1 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-2.5">
+      <p className="mb-0.5 flex items-center gap-1 text-[10px] font-medium text-foreground">
+        <Layers className="h-3 w-3 text-primary" />
+        Merge Sort — Review
+      </p>
+      <div className="space-y-1 border-l border-border/60 pl-2">
+        {NOTE_LINES.map((line, i) => (
+          <p
+            key={line}
+            className={`truncate text-[9px] text-muted-foreground transition-all duration-500 ${
+              i < count ? 'translate-x-0 opacity-100' : 'translate-x-1 opacity-0'
+            }`}
+          >
+            {line}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// "Tasks that track themselves" — checking a task off flips its status pill live.
+export const TasksBoardAnimation = () => {
+  const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => setCompleted((c) => !c), 1700);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="mb-4 flex h-24 flex-col justify-center gap-1.5 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
+      <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2.5 py-2 shadow-sm">
         <span
-          className={`ml-2 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors duration-500 ${
-            overdue ? 'animate-pulse bg-destructive/15 text-destructive' : 'bg-muted text-muted-foreground'
+          className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border-2 transition-colors duration-300 ${
+            completed ? 'border-[hsl(var(--status-done-fg))] bg-[hsl(var(--status-done-fg))]' : 'border-border'
           }`}
         >
-          {overdue ? 'Overdue' : 'Due tomorrow'}
+          {completed && <Check className="h-2.5 w-2.5 text-white" />}
+        </span>
+        <span className={`truncate text-[11px] transition-colors duration-300 ${completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+          Problem Set 5
+        </span>
+      </div>
+      <div className="flex justify-end">
+        <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors duration-300 ${completed ? 'pill-done' : 'pill-in-progress'}`}>
+          {completed ? 'Done' : 'In Progress'}
         </span>
       </div>
     </div>
   );
 };
 
-// "Progress at a glance" — the same CircularProgress ring used on real course cards,
-// filling up and looping, so the preview is literally the real component.
-export const ProgressAnimation = () => {
-  const [pct, setPct] = useState(0);
+// "AI-planned roadmaps" — a generated task breakdown lands one row at a time.
+const ROADMAP_TASKS = ['Define scope', 'Build wireframes', 'Set up repo', 'Deploy live'];
+
+export const RoadmapAnimation = () => {
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const target = 72;
-    const interval = setInterval(() => {
-      setPct((p) => (p >= target ? 0 : p + 4));
-    }, 150);
+    const interval = setInterval(() => setCount((c) => (c + 1) % (ROADMAP_TASKS.length + 1)), 750);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="mb-4 flex h-24 items-center justify-center rounded-lg border border-dashed border-primary/30 bg-primary/5">
-      <CircularProgress percentage={pct} size={62} strokeWidth={6} color="blue" />
-    </div>
-  );
-};
-
-// "Streaks that keep you going" — a flame counts up through a week, day dots filling in behind it.
-export const StreakAnimation = () => {
-  const [day, setDay] = useState(0);
-  const total = 6;
-
-  useEffect(() => {
-    const interval = setInterval(() => setDay((d) => (d >= total ? 0 : d + 1)), 450);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="mb-4 flex h-24 flex-col items-center justify-center gap-2.5 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
-      <div className="flex items-center gap-1.5">
-        <Flame
-          className={`h-4 w-4 transition-all duration-300 ${
-            day > 0 ? 'scale-110 text-orange-500' : 'scale-100 text-muted-foreground'
+    <div className="mb-4 flex h-24 flex-col justify-center gap-1 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-2.5">
+      {ROADMAP_TASKS.map((t, i) => (
+        <div
+          key={t}
+          className={`flex items-center gap-1.5 text-[10px] transition-all duration-400 ${
+            i < count ? 'translate-x-0 opacity-100' : '-translate-x-1 opacity-0'
           }`}
-        />
-        <span className="font-numeric text-lg font-bold leading-none text-foreground">{day}</span>
-        <span className="text-[11px] text-muted-foreground">day{day === 1 ? '' : 's'}</span>
-      </div>
-      <div className="flex gap-1">
-        {Array.from({ length: total }).map((_, i) => (
-          <span
-            key={i}
-            className={`h-2 w-2 rounded-full transition-colors duration-300 ${i < day ? 'bg-orange-500' : 'bg-muted'}`}
-          />
-        ))}
-      </div>
+        >
+          <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <Sparkles className="h-2 w-2" />
+          </span>
+          <span className="truncate text-foreground">{t}</span>
+        </div>
+      ))}
     </div>
   );
 };

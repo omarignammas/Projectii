@@ -4,8 +4,7 @@ import {
   FolderKanban,
   ArrowRight,
   Layers,
-  CalendarClock,
-  Gauge,
+  Map,
   Flame,
   CheckCircle2,
   Home,
@@ -15,6 +14,8 @@ import {
   BarChart3,
   Menu,
   X,
+  Sparkles,
+  Timer,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../hooks/useAuth';
@@ -25,7 +26,7 @@ import AiReportShowcase from '../components/landing/AiReportShowcase';
 import SummaryQuizShowcase from '../components/landing/SummaryQuizShowcase';
 import StepsTimeline from '../components/landing/StepsTimeline';
 import RotatingWord from '../components/landing/RotatingWord';
-import { CoursesAnimation, DueDatesAnimation, ProgressAnimation, StreakAnimation } from '../components/landing/FeatureAnimations';
+import { AiChatAnimation, NotesAnimation, TasksBoardAnimation, RoadmapAnimation } from '../components/landing/FeatureAnimations';
 import HeroNotifications from '../components/landing/HeroNotifications';
 import { ModeToggle } from '../components/ui/mode-toggle';
 
@@ -43,30 +44,37 @@ const NAV_LINKS = [
 const HERO_AUDIENCE_WORDS = ['study groups', 'class cohorts', 'bootcamp crews', 'founder teams'];
 const WORKSPACE_WORDS = ['your terms', 'your rules', 'your speed', 'your plans'];
 
+const HERO_CAPABILITIES = [
+  { icon: Sparkles, label: 'AI-assisted chat & summaries' },
+  { icon: Timer, label: 'Live focus rooms' },
+  { icon: Flame, label: 'Auto-tracked streaks' },
+  { icon: Layers, label: 'Shared session notes' },
+];
+
 const FEATURES = [
   {
+    icon: Sparkles,
+    title: 'AI, right in the chat',
+    description: 'Mention @ai in any room chat and get an instant answer — from a quick explanation to curated links, no tab-switching.',
+    Anim: AiChatAnimation,
+  },
+  {
     icon: Layers,
-    title: 'Courses as containers',
-    description: 'Group each term into courses, add tasks underneath, and keep every assignment in one place.',
-    Anim: CoursesAnimation,
+    title: 'Notes everyone builds on',
+    description: 'Session notes group themselves by topic as your group adds to them — one shared thread, not scattered messages.',
+    Anim: NotesAnimation,
   },
   {
-    icon: CalendarClock,
-    title: 'Due dates that matter',
-    description: 'Set a due date per task and Projectii flags anything overdue automatically — nothing slips through.',
-    Anim: DueDatesAnimation,
+    icon: ListTodo,
+    title: 'Tasks that track themselves',
+    description: 'Check something off and its status, board column, and course progress all update on their own — nothing to sync by hand.',
+    Anim: TasksBoardAnimation,
   },
   {
-    icon: Gauge,
-    title: 'Progress at a glance',
-    description: 'Live completion rings on every course and a dashboard summary roll everything up in real time.',
-    Anim: ProgressAnimation,
-  },
-  {
-    icon: Flame,
-    title: 'Streaks that keep you going',
-    description: 'Complete something every day and Projectii tracks your streak automatically — miss a day and it resets, no excuses.',
-    Anim: StreakAnimation,
+    icon: Map,
+    title: 'AI-planned roadmaps',
+    description: 'Upload a brief or describe the project — AI drafts a full task breakdown with dates and priorities, ready to review.',
+    Anim: RoadmapAnimation,
   },
 ];
 
@@ -80,18 +88,18 @@ const AREAS = [
 const STEPS = [
   {
     number: '01',
-    title: 'Create a course',
-    description: 'Give it a name, a term, and an instructor. That\'s your workspace for everything related to it.',
+    title: 'Upload or describe it',
+    description: 'Drop in a syllabus, brief, or reference file — or just describe the project. That\'s the material AI plans from.',
   },
   {
     number: '02',
-    title: 'Break it into tasks',
-    description: 'Add assignments, readings, and exams with due dates as the work gets defined. Edit or remove them anytime.',
+    title: 'AI drafts the roadmap',
+    description: 'Get back a full task breakdown — titles, priorities, types, and due dates — built around your target date.',
   },
   {
     number: '03',
-    title: 'Track it automatically',
-    description: 'Check tasks off as you go — progress rings and overdue flags update themselves.',
+    title: 'Review, then make it real',
+    description: 'Edit or remove anything before confirming. Approved tasks land straight in your course, calendar, and team.',
   },
 ];
 
@@ -259,6 +267,18 @@ export const LandingPage = () => {
                 </Button>
               )}
             </div>
+
+            <div className="animate-in fade-in slide-in-from-bottom-3 mt-8 flex flex-wrap items-center justify-center gap-2 duration-700 [animation-delay:500ms] [animation-fill-mode:backwards]">
+              {HERO_CAPABILITIES.map((cap) => (
+                <span
+                  key={cap.label}
+                  className="flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 py-1.5 text-xs text-muted-foreground"
+                >
+                  <cap.icon className="h-3.5 w-3.5 text-primary" />
+                  {cap.label}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -269,7 +289,7 @@ export const LandingPage = () => {
           <Reveal className="mb-10 text-center">
             <p className="eyebrow-label mx-auto mb-4 w-fit">[ the app ]</p>
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Every screen, <span className="text-primary">built for the work</span>
+              Every screen, <span className="text-neon-blue">built for the work</span>
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
               A quick look around — this is what you'll actually be using.
@@ -287,7 +307,7 @@ export const LandingPage = () => {
           <Reveal className="mb-10 text-center">
             <p className="eyebrow-label mx-auto mb-4 w-fit">[ together ]</p>
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Bring <span className="text-primary">friends</span> into focus
+              Bring <span className="text-neon-blue">friends</span> into focus
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
               Invite a friend to a Focus Room and they get a real-time notification the moment you do.
@@ -305,7 +325,7 @@ export const LandingPage = () => {
           <Reveal className="mb-10 text-center">
             <p className="eyebrow-label mx-auto mb-4 w-fit">[ ai ]</p>
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Your session, <span className="text-primary">summarized for you</span>
+              Your session, <span className="text-neon-blue">summarized for you</span>
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
               Chat, take notes, focus together, or upload a course file — AI turns any of it into a clean report,
@@ -387,9 +407,11 @@ export const LandingPage = () => {
         <div className="container mx-auto px-4">
           <Reveal>
             <p className="eyebrow-label mb-4">[ features ]</p>
-            <h2 className="mb-3 text-3xl font-bold text-foreground sm:text-4xl">Everything a course needs</h2>
+            <h2 className="mb-3 text-3xl font-bold text-foreground sm:text-4xl">
+              AI that does <span className="text-neon-blue">the busywork</span>
+            </h2>
             <p className="mb-14 max-w-xl text-muted-foreground">
-              No workflow builders to configure, no fields you'll never use.
+              Not a chatbot bolted on the side — it's in the chat, the notes, and the planning, wherever the work already happens.
             </p>
           </Reveal>
 
@@ -417,7 +439,9 @@ export const LandingPage = () => {
         <div className="container mx-auto px-4">
           <Reveal>
             <p className="eyebrow-label mb-4">[ process ]</p>
-            <h2 className="mb-14 text-3xl font-bold text-foreground sm:text-4xl">Up and running in three steps</h2>
+            <h2 className="mb-14 text-3xl font-bold text-foreground sm:text-4xl">
+              From a brief to a <span className="text-neon-blue">full roadmap</span>
+            </h2>
           </Reveal>
 
           <Reveal delay={100}>

@@ -18,13 +18,19 @@ import {
   Hand,
   Check,
   MessageSquare,
-  Lock,
+  Sparkles,
+  Layers,
+  ExternalLink,
 } from 'lucide-react';
 import { CircularProgress } from '../shared/CircularProgress';
 import Avatar from '../shared/Avatar';
 
 const TAB_ORDER = ['focus', 'dashboard', 'tasks', 'courses', 'calendar'];
 const AUTO_ADVANCE_MS = 5200;
+// The focus tab now plays out a full two-round AI conversation (question →
+// answer, then a follow-up that gets resource links) — it needs much longer
+// on screen than the other tabs' shorter, simpler animations.
+const FOCUS_TAB_ADVANCE_MS = 16000;
 
 // Mirrors Sidebar.jsx's NAV_ITEMS exactly — only the ones with a tabKey have
 // a mockup screen behind them in this preview; the rest render for visual
@@ -320,25 +326,55 @@ const CalendarScreen = () => (
   </div>
 );
 
+// Regular room chat, then a @ai mention → "AI is thinking…" → an AI reply
+// bubble — mirrors the real @ai-mention feature (ChatPanel.jsx), not just
+// generic chat, so this preview stays a faithful screen of the actual app.
+// Two back-to-back scenarios on purpose: a direct concept question (prose
+// answer) and a plain, unmentioned question from a participant that prompts
+// someone to loop the AI in for reading material (list-of-links answer) —
+// showing the AI answers in more than one shape, not just explanations.
+// `hold` is how long (ms) this message stays as the latest one before the
+// next one appears — varied on purpose so the sequence reads like a real
+// conversation rather than a metronome.
 const CHAT_SCRIPT = [
-  { id: 1, type: 'system', body: 'Round 2 starting' },
-  { id: 2, type: 'chat', sender: 'Mira', body: 'locked in', icon: Lock },
-  { id: 3, type: 'chat', sender: 'Deniz', body: 'same, starting problem set 2' },
-  { id: 4, type: 'system', body: 'Deniz raised a hand', icon: Hand },
-  { id: 5, type: 'chat', sender: 'You', body: 'almost done with Q3' },
-  { id: 6, type: 'chat', sender: 'Mira', body: "nice, I'll share my notes after" },
-  { id: 7, type: 'chat', sender: 'Deniz', body: 'appreciate it 🙏' },
-  { id: 8, type: 'system', body: 'Mira · focusing' },
+  { id: 1, type: 'chat', sender: 'Deniz', body: 'starting problem set 2', hold: 1400 },
+  { id: 2, type: 'chat', sender: 'You', body: '@ai explain big-O of merge sort', hold: 900 },
+  { id: 3, type: 'system', body: 'AI is thinking…', hold: 1600 },
+  {
+    id: 4,
+    type: 'ai',
+    body: 'Merge sort is O(n log n) in every case — split in half (log n levels), merge each level in linear time.',
+    hold: 2600,
+  },
+  { id: 5, type: 'chat', sender: 'Mira', body: 'that makes sense 🙏', hold: 1800 },
+  { id: 6, type: 'chat', sender: 'Deniz', body: 'anyone got good resources on this?', hold: 1600 },
+  { id: 7, type: 'chat', sender: 'You', body: '@ai drop some links', hold: 900 },
+  { id: 8, type: 'system', body: 'AI is thinking…', hold: 1600 },
+  {
+    id: 9,
+    type: 'ai',
+    body: 'A few worth a look:',
+    links: ['Wikipedia — Merge sort', 'MIT OCW — Divide & Conquer', 'VisuAlgo — Sorting visualization'],
+    hold: 3400,
+  },
 ];
 
 const FocusChatPanel = () => {
   const [visibleCount, setVisibleCount] = useState(1);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVisibleCount((c) => (c < CHAT_SCRIPT.length ? c + 1 : 1));
-    }, 1000);
-    return () => clearInterval(interval);
+    let timeoutId;
+    const step = (count) => {
+      const hold = CHAT_SCRIPT[count - 1]?.hold ?? 1200;
+      timeoutId = setTimeout(() => {
+        const next = count < CHAT_SCRIPT.length ? count + 1 : 1;
+        setVisibleCount(next);
+        step(next);
+      }, hold);
+    };
+    step(visibleCount);
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -347,55 +383,122 @@ const FocusChatPanel = () => {
         <MessageSquare className="h-3.5 w-3.5 text-primary" />
         room chat
       </p>
-      <div className="min-h-[190px] flex-1 space-y-1.5">
-        {CHAT_SCRIPT.slice(0, visibleCount).map((m) => (
-          <div key={m.id} className="animate-in fade-in slide-in-from-bottom-1 duration-500">
-            {m.type === 'system' ? (
-              <p className="flex items-center justify-center gap-1 text-center text-[9px] text-muted-foreground">
-                {m.icon && <m.icon className="h-2.5 w-2.5 shrink-0" />}
+      <div className="min-h-[210px] flex-1 space-y-1.5">
+        {CHAT_SCRIPT.slice(0, visibleCount).map((m) => {
+          if (m.type === 'system') {
+            return (
+              <p key={m.id} className="animate-in fade-in flex items-center justify-center gap-1 text-center text-[9px] text-muted-foreground duration-500">
+                <Sparkles className="h-2.5 w-2.5 shrink-0 text-primary" />
                 {m.body}
               </p>
-            ) : (
-              <div className={`flex ${m.sender === 'You' ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[78%] rounded-2xl px-2.5 py-1.5 text-[10px] leading-snug shadow-sm ${
-                    m.sender === 'You'
-                      ? 'rounded-br-sm bg-primary text-primary-foreground'
-                      : 'rounded-bl-sm bg-accent text-foreground'
-                  }`}
-                >
-                  {m.sender !== 'You' && (
-                    <span className="mb-0.5 block text-[8px] font-semibold text-primary">{m.sender}</span>
+            );
+          }
+
+          if (m.type === 'ai') {
+            return (
+              <div key={m.id} className="animate-in fade-in slide-in-from-bottom-1 flex items-end gap-1.5 duration-500">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <Sparkles className="h-2.5 w-2.5" />
+                </div>
+                <div className="max-w-[82%] rounded-2xl rounded-bl-sm border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-[10px] leading-snug text-foreground shadow-sm">
+                  {m.body}
+                  {m.links && (
+                    <ul className="mt-1 space-y-1">
+                      {m.links.map((link) => (
+                        <li key={link} className="flex items-center gap-1 text-primary">
+                          <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+                          <span className="text-foreground">{link}</span>
+                        </li>
+                      ))}
+                    </ul>
                   )}
-                  <span className="flex items-center gap-1">
-                    {m.icon && <m.icon className="h-2.5 w-2.5 shrink-0" />}
-                    {m.body}
-                  </span>
                 </div>
               </div>
-            )}
-          </div>
-        ))}
+            );
+          }
+
+          return (
+            <div key={m.id} className={`animate-in fade-in slide-in-from-bottom-1 flex duration-500 ${m.sender === 'You' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[78%] rounded-2xl px-2.5 py-1.5 text-[10px] leading-snug shadow-sm ${
+                  m.sender === 'You'
+                    ? 'rounded-br-sm bg-primary text-primary-foreground'
+                    : 'rounded-bl-sm bg-accent text-foreground'
+                }`}
+              >
+                {m.sender !== 'You' && (
+                  <span className="mb-0.5 block text-[8px] font-semibold text-primary">{m.sender}</span>
+                )}
+                {m.body}
+              </div>
+            </div>
+          );
+        })}
       </div>
-      <div className="mt-2 flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 p-1.5 text-[9px] text-muted-foreground">
-        <Lock className="h-3 w-3 shrink-0" />
-        Locked during focus — reactions only
+    </div>
+  );
+};
+
+// Mirrors SessionNotes.jsx's topic-grouped shape — one topic, contributor
+// notes stacking in one at a time.
+const NOTES_SCRIPT = {
+  title: 'Merge Sort — Midterm Review',
+  notes: [
+    { id: 1, name: 'Mira', body: 'Divide step is O(log n) levels of recursion.' },
+    { id: 2, name: 'Deniz', body: 'Merge step is O(n) per level → O(n log n) total.' },
+  ],
+};
+
+const FocusNotesPanel = () => {
+  const [visibleCount, setVisibleCount] = useState(1);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisibleCount((c) => (c < NOTES_SCRIPT.notes.length ? c + 1 : 1));
+    }, 1700);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex flex-col rounded-lg border border-border/70 bg-card/60 p-3">
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+        <Layers className="h-3.5 w-3.5 text-primary" />
+        session notes
+      </p>
+      <div className="min-h-[210px] flex-1">
+        <div className="rounded-lg border border-border/60 bg-card p-2.5">
+          <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold text-foreground">
+            <Layers className="h-3 w-3 shrink-0 text-primary" />
+            {NOTES_SCRIPT.title}
+          </p>
+          <div className="space-y-2 border-l border-border/60 pl-2.5">
+            {NOTES_SCRIPT.notes.slice(0, visibleCount).map((note) => (
+              <div key={note.id} className="animate-in fade-in slide-in-from-bottom-1 duration-500">
+                <div className="mb-0.5 flex items-center gap-1.5">
+                  <Avatar name={note.name} size="sm" />
+                  <span className="text-[9px] font-medium text-foreground">{note.name}</span>
+                </div>
+                <p className="text-[9px] text-muted-foreground">{note.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
 const FocusScreen = () => (
-  <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-[1.1fr_1fr] sm:p-5">
+  <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-[0.85fr_1fr_1fr] sm:p-5">
     <div className="flex flex-col gap-3">
       <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-border/70 bg-card/60 p-5">
         <p className="section-header">
           <span className="h-2 w-2 rounded-full bg-destructive" />
           Focus · Round 2/4
         </p>
-        <CircularProgress percentage={68} size={116} strokeWidth={8} color="blue">
+        <CircularProgress percentage={68} size={96} strokeWidth={7} color="blue">
           <div className="flex flex-col items-center">
-            <p className="font-numeric text-xl font-bold text-foreground">18:24</p>
+            <p className="font-numeric text-lg font-bold text-foreground">18:24</p>
             <p className="text-[9px] text-muted-foreground">remaining</p>
           </div>
         </CircularProgress>
@@ -419,6 +522,7 @@ const FocusScreen = () => (
       </div>
     </div>
 
+    <FocusNotesPanel />
     <FocusChatPanel />
   </div>
 );
@@ -441,7 +545,7 @@ export const ScreensShowcase = () => {
     const timeoutId = setTimeout(() => {
       const idx = TAB_ORDER.indexOf(active);
       setActive(TAB_ORDER[(idx + 1) % TAB_ORDER.length]);
-    }, AUTO_ADVANCE_MS);
+    }, active === 'focus' ? FOCUS_TAB_ADVANCE_MS : AUTO_ADVANCE_MS);
     return () => clearTimeout(timeoutId);
   }, [active]);
 

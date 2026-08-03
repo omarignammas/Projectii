@@ -1,7 +1,9 @@
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "../theme/theme-provider"
-import { Button } from "./button"
 
+// Sized and colored to match the other round icon buttons it sits next to
+// (NotificationBell, the profile trigger in AppShell) — h-9 w-9, rounded-full,
+// same border/background/hover treatment, same muted-foreground icon color.
 export function ModeToggle() {
   const { theme, setTheme } = useTheme()
 
@@ -10,30 +12,14 @@ export function ModeToggle() {
   }
 
   return (
-    <Button
-      variant="outline"
-      size="icon"
+    <button
+      type="button"
       onClick={toggleTheme}
-      className="relative"
       aria-label="Toggle theme"
+      className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/80 bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
-      <Sun
-        className="
-          h-[1.2rem] w-[1.2rem]
-          rotate-0 scale-100 transition-all
-          dark:-rotate-90 dark:scale-0
-          dark:hover:bg-blue-300
-        "
-      />
-
-      <Moon
-        className="
-          absolute h-[1.2rem] w-[1.2rem]
-          rotate-90 scale-0 transition-all
-          dark:rotate-0 dark:scale-100
-          dark:text-blue-300
-        "
-      />
-    </Button>
+      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+    </button>
   )
 }

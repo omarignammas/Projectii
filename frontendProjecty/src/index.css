@@ -253,21 +253,23 @@
     animation: blob-float-b 20s ease-in-out infinite;
   }
 
-  /* Neon sign glow — a real halo via layered text-shadow. Static, not pulsing —
-     a steady tube sign, not a flickering one. */
+  /* Plain blue in light mode — the glow only reads as "neon" against a dark
+     background, so light mode just gets flat color, no text-shadow. */
   .text-neon-blue {
     color: hsl(var(--chart-1));
+  }
+
+  /* Neon sign glow — a real halo via layered text-shadow. Static, not pulsing —
+     a steady tube sign, not a flickering one. In dark mode a real neon tube's
+     core reads almost white-hot, with the color living in the halo — so
+     brighten just the fill, not the glow. */
+  .dark .text-neon-blue {
+    color: hsl(218 95% 88%);
     text-shadow:
       0 0 6px hsl(var(--chart-1) / 0.6),
       0 0 4px hsl(var(--chart-1) / 0.5),
       0 0 5px hsl(var(--chart-1) / 0.4),
       0 0 5px hsl(var(--chart-1) / 0.4);
-  }
-
-  /* In dark mode a real neon tube's core reads almost white-hot, with the
-     color living in the halo — so brighten just the fill, not the glow. */
-  .dark .text-neon-blue {
-    color: hsl(218 95% 88%);
   }
 }
 
