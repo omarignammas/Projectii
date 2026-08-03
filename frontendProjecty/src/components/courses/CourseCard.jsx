@@ -96,14 +96,14 @@ export const CourseCard = ({ course, onDelete }) => {
       {/* HEADER */}
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             {course.colorTag && (
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: course.colorTag }}
               />
             )}
-            <CardTitle className="text-lg text-foreground transition-colors group-hover:text-primary">
+            <CardTitle className="min-w-0 flex-1 truncate text-lg text-foreground transition-colors group-hover:text-primary">
               {course.title}
             </CardTitle>
             {course.youtubePlaylistId && (

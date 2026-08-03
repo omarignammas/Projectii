@@ -41,7 +41,7 @@ export const NoteCard = ({ note, onDelete }) => {
     <Card className="border-border/80 bg-card">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base text-foreground">{note.title}</CardTitle>
+          <CardTitle className="min-w-0 flex-1 truncate text-base text-foreground">{note.title}</CardTitle>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive">

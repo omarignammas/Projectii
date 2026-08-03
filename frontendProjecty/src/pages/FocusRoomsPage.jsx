@@ -20,7 +20,7 @@ const RoomCard = ({ room, onClick }) => (
     className="group flex flex-col items-start rounded-xl border border-border/80 bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
   >
     <div className="mb-3 flex w-full items-start justify-between gap-2">
-      <h3 className="text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
+      <h3 className="min-w-0 flex-1 truncate text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
         {room.name}
       </h3>
       <Badge variant="outline" className="shrink-0 border-primary/30 bg-primary/10 font-numeric text-primary">

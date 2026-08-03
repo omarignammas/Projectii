@@ -51,9 +51,9 @@ export const ProfilePage = () => {
       <Card className="mb-6 border-border/80 bg-card">
         <CardContent className="flex items-center gap-4 p-6">
           <Avatar name={`${user?.firstName} ${user?.lastName}`} avatarUrl={user?.avatarUrl} size="xl" />
-          <div>
-            <p className="text-lg font-semibold text-foreground">{user?.firstName} {user?.lastName}</p>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-lg font-semibold text-foreground">{user?.firstName} {user?.lastName}</p>
+            <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
           </div>
         </CardContent>
       </Card>

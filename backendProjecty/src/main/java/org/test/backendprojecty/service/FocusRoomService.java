@@ -2,11 +2,15 @@ package org.test.backendprojecty.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.test.backendprojecty.config.PaginationUtils;
 import org.test.backendprojecty.dtos.request.FocusRoomRequest;
 import org.test.backendprojecty.dtos.request.PaginationRequest;
@@ -53,6 +57,7 @@ public class FocusRoomService {
     private final FriendService friendService;
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
+    private final PlatformTransactionManager transactionManager;
 
     @Transactional
     public FocusRoomResponse createRoom(FocusRoomRequest request) {
@@ -210,7 +215,18 @@ public class FocusRoomService {
         } else {
             isFreshJoin = false;
         }
-        participantRepository.save(participant);
+
+        try {
+            saveParticipantInNewTransaction(participant);
+        } catch (DataIntegrityViolationException e) {
+            // Concurrent join for the same room+user won the race against us (see the
+            // unique constraint on focus_room_participants). Their row already reflects
+            // what we were trying to do, so fall back to it instead of failing the request.
+            participant = participantRepository
+                    .findByRoomIdAndUserId(room.getId(), currentUser.getId())
+                    .orElseThrow(() -> e);
+            isFreshJoin = false;
+        }
 
         if (isFreshJoin) {
             postSystemMessage(room, displayName(currentUser) + " joined");
@@ -224,6 +240,17 @@ public class FocusRoomService {
         }
 
         return buildSnapshotAndBroadcast(room);
+    }
+
+    // Runs the participant upsert in its own transaction so a unique-constraint
+    // violation (two concurrent joins for the same room+user) only rolls back
+    // this write, instead of poisoning joinRoom()'s outer transaction — Postgres
+    // aborts the whole transaction on error, so retrying a read afterward would
+    // otherwise fail too.
+    private void saveParticipantInNewTransaction(FocusRoomParticipant participant) {
+        TransactionTemplate requiresNew = new TransactionTemplate(transactionManager);
+        requiresNew.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        requiresNew.executeWithoutResult(status -> participantRepository.saveAndFlush(participant));
     }
 
     @Transactional

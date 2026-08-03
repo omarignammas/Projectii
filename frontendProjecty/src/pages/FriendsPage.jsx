@@ -240,7 +240,7 @@ export const FriendsPage = () => {
             {outgoing.map((req) => (
               <div key={req.id} className="flex items-center gap-3 rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
                 <Avatar name={req.recipientName} size="sm" />
-                Waiting on {req.recipientName} ({req.recipientEmail})
+                <span className="min-w-0 flex-1 truncate">Waiting on {req.recipientName} ({req.recipientEmail})</span>
               </div>
             ))}
           </div>

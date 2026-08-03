@@ -98,7 +98,7 @@ export const QuizTakePage = () => {
   }
 
   return (
-    <div className="accent-purple container mx-auto max-w-3xl px-4 py-10 pb-28">
+    <div className="accent-purple container mx-auto max-w-5xl px-4 py-10 pb-28">
       <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6 text-muted-foreground hover:text-foreground">
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
@@ -204,7 +204,7 @@ export const QuizTakePage = () => {
 
       {quiz.status === 'READY' && !result && (
         <div className="fixed inset-x-0 bottom-0 border-t border-border/80 bg-background/95 p-4 backdrop-blur-md">
-          <div className="container mx-auto flex max-w-3xl justify-end px-4">
+          <div className="container mx-auto flex max-w-5xl justify-end px-4">
             <Button onClick={handleSubmit} disabled={!allAnswered || submitting}>
               {submitting ? 'Submitting...' : 'Submit Quiz'}
             </Button>

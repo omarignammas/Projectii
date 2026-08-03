@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Lock, Hand, Send, MessageSquare, Smile, Sparkles } from 'lucide-react';
+import { Lock, Hand, Send, MessageSquare, Smile, Sparkles, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -19,6 +19,18 @@ const aiMarkdownComponents = {
   h1: (props) => <p className="mb-1 text-sm font-bold last:mb-0" {...props} />,
   h2: (props) => <p className="mb-1 text-sm font-bold last:mb-0" {...props} />,
   h3: (props) => <p className="mb-1 text-sm font-semibold last:mb-0" {...props} />,
+  a: ({ href, children, ...props }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+      {...props}
+    >
+      <ExternalLink className="h-3 w-3 shrink-0" />
+      {children}
+    </a>
+  ),
 };
 
 const isEmojiOnly = (text) => {
@@ -102,13 +114,32 @@ export const ChatPanel = ({
           }
 
           if (m.type === 'AI') {
+            // The chat message immediately before this AI turn's "thinking"
+            // beat is the one that triggered it — surface who asked, with
+            // their real avatar, rather than just labeling the reply "AI".
+            let askedBy = null;
+            for (let j = i - 1; j >= 0; j--) {
+              if (messages[j].type === 'CHAT') { askedBy = messages[j]; break; }
+              if (messages[j].type === 'AI') break;
+            }
+
             return (
               <div key={m.id} className="mt-3 flex items-end gap-2">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
                 </div>
                 <div className="flex max-w-[85%] flex-col items-start">
-                  <span className="mb-0.5 px-1 text-xs font-medium text-primary">AI</span>
+                  <span className="mb-0.5 flex items-center gap-1.5 px-1 text-xs font-medium text-primary">
+                    AI
+                    {askedBy && (
+                      <span className="flex items-center gap-1 font-normal text-muted-foreground">
+                        <span className="text-muted-foreground/50">·</span>
+                        replying to
+                        <Avatar name={askedBy.senderName} avatarUrl={askedBy.senderAvatarUrl} size="sm" />
+                        {askedBy.senderName}
+                      </span>
+                    )}
+                  </span>
                   <div className="animate-in fade-in slide-in-from-bottom-1 rounded-2xl rounded-bl-sm border border-primary/30 bg-primary/5 px-3 py-2 text-foreground shadow-sm">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={aiMarkdownComponents}>
                       {m.body}

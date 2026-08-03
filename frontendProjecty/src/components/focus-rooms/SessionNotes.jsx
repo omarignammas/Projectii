@@ -113,8 +113,8 @@ export const SessionNotes = ({ roomCode }) => {
                   <div key={note.id}>
                     <div className="mb-1 flex items-center gap-2">
                       <Avatar name={note.userName} size="sm" />
-                      <span className="text-xs font-medium text-foreground">{note.userName}</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground">
+                      <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">{note.userName}</span>
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
                         {format(new Date(note.createdAt), 'HH:mm')}
                       </span>
                     </div>

@@ -7,7 +7,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.test.backendprojecty.dtos.request.FocusRoomRequest;
 import org.test.backendprojecty.dtos.response.FocusRoomResponse;
 import org.test.backendprojecty.entity.*;
@@ -58,6 +60,8 @@ class FocusRoomServiceTest {
     private NotificationService notificationService;
     @Mock
     private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     private FocusRoomService focusRoomService;
 
@@ -69,7 +73,7 @@ class FocusRoomServiceTest {
         focusRoomService = new FocusRoomService(
                 focusRoomRepository, participantRepository, messageRepository, courseRepository, userRepository,
                 focusRoomMapper, currentUserProvider, messagingTemplate, focusRoomSchedulerService,
-                friendService, notificationService, eventPublisher
+                friendService, notificationService, eventPublisher, transactionManager
         );
 
         host = User.builder().id(1L).firstName("Host").lastName("User").email("host@example.com").build();
@@ -267,7 +271,7 @@ class FocusRoomServiceTest {
         focusRoomService.joinRoom("ABC-123");
 
         ArgumentCaptor<FocusRoomParticipant> captor = ArgumentCaptor.forClass(FocusRoomParticipant.class);
-        verify(participantRepository).save(captor.capture());
+        verify(participantRepository).saveAndFlush(captor.capture());
         assertEquals(ParticipantStatus.JOINED, captor.getValue().getStatus());
 
         ArgumentCaptor<FocusRoomMessage> msgCaptor = ArgumentCaptor.forClass(FocusRoomMessage.class);
@@ -306,6 +310,29 @@ class FocusRoomServiceTest {
         focusRoomService.joinRoom("ABC-123");
 
         verify(messageRepository, never()).save(any());
+    }
+
+    @Test
+    void joinRoom_ConcurrentJoinRace_FallsBackToWinningParticipantRow() {
+        FocusRoom room = lobbyRoom();
+        FocusRoomParticipant winner = participant(room, guest, ParticipantStatus.JOINED);
+        when(currentUserProvider.getCurrentUser()).thenReturn(guest);
+        when(focusRoomRepository.findByCode("ABC-123")).thenReturn(Optional.of(room));
+        // First read (in joinRoom) sees nobody yet; a concurrent request wins the
+        // insert race, so the retry read after the constraint violation finds their row.
+        when(participantRepository.findByRoomIdAndUserId(10L, guest.getId()))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(winner));
+        when(participantRepository.saveAndFlush(any(FocusRoomParticipant.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint"));
+
+        FocusRoomResponse response = focusRoomService.joinRoom("ABC-123");
+
+        assertNotNull(response);
+        // We lost the race, so this wasn't a fresh join from our perspective — no duplicate
+        // "joined" system message and no duplicate invite-accepted notification.
+        verify(messageRepository, never()).save(any());
+        verifyNoInteractions(notificationService);
     }
 
     @Test

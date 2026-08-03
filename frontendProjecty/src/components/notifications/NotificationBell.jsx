@@ -91,7 +91,7 @@ export const NotificationBell = ({ notifications, unreadCount, markRead, markAll
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" collisionPadding={16} className="w-72 sm:w-80">
         <div className="flex items-center justify-between px-2 py-1.5">
           <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
           {unreadCount > 0 && (

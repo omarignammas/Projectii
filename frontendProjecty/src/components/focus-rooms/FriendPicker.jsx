@@ -37,7 +37,7 @@ export const FriendPicker = ({ selected, onChange, excludeUserIds = [] }) => {
         <label key={friend.userId} className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-accent">
           <Checkbox checked={selected.includes(friend.userId)} onCheckedChange={() => toggle(friend.userId)} />
           <Avatar name={friend.displayName} avatarUrl={friend.avatarUrl} size="sm" />
-          <span className="text-sm text-foreground">{friend.displayName}</span>
+          <span className="min-w-0 flex-1 truncate text-sm text-foreground">{friend.displayName}</span>
         </label>
       ))}
     </div>

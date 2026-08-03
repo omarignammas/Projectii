@@ -43,13 +43,13 @@ export const RoomLobby = ({ room, isHost, userEmail, onStart, onChatModeChange, 
   return (
     <div className="mx-auto max-w-xl">
       <div className="rounded-xl border border-border/80 bg-card">
-        <div className="flex items-center justify-between border-b border-border/60 p-5">
-          <div>
+        <div className="flex items-center justify-between gap-3 border-b border-border/60 p-5">
+          <div className="min-w-0">
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Timer className="h-4 w-4" />
+              <Timer className="h-4 w-4 shrink-0" />
               Focus Room · Code: <span className="font-numeric font-semibold text-foreground">{room.code}</span>
             </p>
-            <h2 className="mt-1 text-xl font-semibold text-foreground">{room.name}</h2>
+            <h2 className="mt-1 truncate text-xl font-semibold text-foreground">{room.name}</h2>
             {room.scheduledFor && (
               <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CalendarClock className="h-3.5 w-3.5" />
@@ -57,7 +57,7 @@ export const RoomLobby = ({ room, isHost, userEmail, onStart, onChatModeChange, 
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {room.locked && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Lock className="h-3.5 w-3.5" /> Locked

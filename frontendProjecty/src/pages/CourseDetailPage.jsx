@@ -190,17 +190,17 @@ export const CourseDetailPage = () => {
 
       <div className="mb-2">
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <div
               className="hero-icon mb-4"
               style={course.colorTag ? { backgroundColor: `${course.colorTag}26`, color: course.colorTag } : undefined}
             >
               <GraduationCap className="h-8 w-8" />
             </div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">{course.title}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="break-words text-4xl font-bold tracking-tight text-foreground sm:text-5xl">{course.title}</h1>
               {!course.isOwner && (
-                <span className="rounded-full border border-border/80 bg-card px-2.5 py-1 text-xs text-muted-foreground">
+                <span className="shrink-0 rounded-full border border-border/80 bg-card px-2.5 py-1 text-xs text-muted-foreground">
                   shared by {course.ownerName}
                 </span>
               )}

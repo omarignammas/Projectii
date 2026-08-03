@@ -10,6 +10,15 @@ export const markdownComponents = {
   ol: (props) => <ol className="mb-3 ml-5 list-decimal space-y-1 text-sm text-muted-foreground" {...props} />,
   li: (props) => <li className="text-sm text-muted-foreground" {...props} />,
   strong: (props) => <strong className="font-semibold text-foreground" {...props} />,
+  a: ({ href, ...props }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+      {...props}
+    />
+  ),
   table: (props) => <table className="mb-3 w-full border-collapse text-sm" {...props} />,
   th: (props) => <th className="border border-border/60 bg-accent/50 p-2 text-left text-xs font-semibold text-foreground" {...props} />,
   td: (props) => <td className="border border-border/60 p-2 text-muted-foreground" {...props} />,
